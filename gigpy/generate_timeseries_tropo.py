@@ -129,7 +129,7 @@ def main(argv):
         del meta['REF_X']
         del meta['REF_Y']
         
-    out_ts_gps = 'timeseries_gps_' + inps.type + '.h5'
+    out_ts_gps = 'timeseries_gps_' + inps.data + '.h5'
     datasetDict = dict()
     datasetDict['timeseries'] = ts_gps
     date_list = read_hdf5(ts_file,datasetName='date')[0]
