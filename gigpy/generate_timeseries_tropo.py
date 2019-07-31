@@ -102,11 +102,11 @@ def main(argv):
     REF_X = int(meta['REF_X'])
     REF_Y = int(meta['REF_Y'])
     
-    if inps.type =='aps': S0 = 'aps_sar'       # total tropospheric map (tropospheric delay & atmospheric water vapor)
-    elif inps.type =='turb': S0 ='turb_sar'    # turbulent tropospheric map
-    elif inps.type =='hgt': S0 ='hgt_sar'      # elevation-correlated tropospheric map
-    elif inps.type =='trend': S0 ='trend_sar'  # spatial trend/ramp of the tropospheric map
-    elif inps.type =='sigma': S0 ='sigma_sar'  # uncertainty map of the turbulent tropospheric map
+    if inps.data =='aps': S0 = 'aps_sar'       # total tropospheric map (tropospheric delay & atmospheric water vapor)
+    elif inps.data =='turb': S0 ='turb_sar'    # turbulent tropospheric map
+    elif inps.data=='hgt': S0 ='hgt_sar'      # elevation-correlated tropospheric map
+    elif inps.data =='trend': S0 ='trend_sar'  # spatial trend/ramp of the tropospheric map
+    elif inps.data =='sigma': S0 ='sigma_sar'  # uncertainty map of the turbulent tropospheric map
     
     ts_gps = np.zeros((len(date_list),LENGTH,WIDTH),dtype = np.float32)
     for i in range(len(date_list)):

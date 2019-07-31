@@ -256,7 +256,7 @@ def main(argv):
     print('Start to generate time-series of tropospheric data ...' )
     txt_list = 'date_list.txt'
     generate_datelist_txt(date_list,txt_list)
-    call_str = 'generate_timeseries_tropo.py ' + txt_list +' ' + inps.ts_file
+    call_str = 'generate_timeseries_tropo.py ' + txt_list +' ' + inps.ts_file + ' --type ' + inps.type
     os.system(call_str)
     
     print('Done.')
