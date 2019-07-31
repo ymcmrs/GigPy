@@ -1,2 +1,2 @@
-# PyGig
-Python based GPS-Imaging Geodesy software
+# GigPy
+Gps-based Image Geodesy software in PYthon (GigPy)
