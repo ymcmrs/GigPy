@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
@@ -77,18 +77,18 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
-   Calculate differences/accumulation between two pygps-based datasets.
+   Calculate differences/accumulation between two gigpy-based datasets.
 '''
 
 EXAMPLE = """Example:
   
-  diff_pygps.py 20190101_aps.h5 20190120_aps.h5 --data aps_sar -o difference_20190101_20190120_aps.h5
-  diff_pygps.py timeseries_gps_aps.h5 timeseries_gps_turb.h5
-  diff_pygps.py timeseries_gps_aps.h5 timeseries_gps_turb.h5 --absolute
-  diff_pygps.py 20190101_aps.h5 20190120_aps.h5 --data turb_sar -o difference_20190101_20190120_aps.h5 
-  diff_pygps.py timeseries.h5 timeseries_gps_aps.h5 -o timeseries_gpsCor.h5 --add
+  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data aps_sar -o difference_20190101_20190120_aps.h5
+  diff_gigpy.py timeseries_gps_aps.h5 timeseries_gps_turb.h5
+  diff_gigpy.py timeseries_gps_aps.h5 timeseries_gps_turb.h5 --absolute
+  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data turb_sar -o difference_20190101_20190120_aps.h5 
+  diff_gigpy.py timeseries.h5 timeseries_gps_aps.h5 -o timeseries_gpsCor.h5 --add
   
 ###################################################################################
 """

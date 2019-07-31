@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-############################################################
-# Program is part of PyGPS v2.0                            #
-# Copyright(c) 2017-2019, Yunmeng Cao                      #
-# Author:  Yunmeng Cao                                     #
-############################################################
+#################################################################
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
+###  Author: Yunmeng Cao                                      ###                                                          
+###  Email : ymcmrs@gmail.com                                 ###
+###  Univ. : King Abdullah University of Science & Technology ###   
+#################################################################
 
 from __future__ import absolute_import
 from __future__ import division
@@ -16,7 +18,7 @@ __doc__ = """
 PyGPS
 =======
 
-Code by Yunmeng Cap and the PyGPS Developers
+Code by Yunmeng Cap and the GigPy Developers
 ymcmrs@gmail.com
 
 Summary
@@ -29,7 +31,7 @@ References
 ----------
 .. [1] Y.M., Cao, et al., 2019, under preparing.
        
-Copyright (c) 2017-2019, PyGPS Developers
+Copyright (c) 2019, GigPy Developers
 """
 
 

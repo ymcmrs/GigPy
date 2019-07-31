@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
-###  Copy Right (c): 2017 - 2019, Yunmeng Cao                 ###  
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
-###  Univ. : Now at KAUST                                     ###   
+###  Univ. : King Abdullah University of Science & Technology ###   
 #################################################################
 
 import numpy as np
@@ -80,7 +80,7 @@ def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
 
 INTRODUCTION = '''
 #############################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    View (i.e., plot) the GPS tropospheric products and estimations.
 '''

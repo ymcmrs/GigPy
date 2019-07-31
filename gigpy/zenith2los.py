@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
@@ -74,7 +74,7 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v2.0
    
    Transfer the measurements from zenith direction to the LOS direction, or inverse.
 '''
@@ -87,8 +87,6 @@ EXAMPLE = """Example:
   
 ###################################################################################
 """
-
-###############################################################
 
 def main(argv):
     

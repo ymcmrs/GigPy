@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
@@ -70,7 +70,7 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v2.0
    
    Generate time-series of high-resolution GPS-based tropospheric maps (include maps of turb, atmospheric delay, trend, elevation-correlated components).
 '''

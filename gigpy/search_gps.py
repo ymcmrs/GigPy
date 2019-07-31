@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-############################################################
-# Program is part of PyGPS v2.0                            #
-# Copyright(c) 2017-2019, Yunmeng Cao                      #
-# Author:  Yunmeng Cao                                     #
-############################################################
+#################################################################
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
+###  Author: Yunmeng Cao                                      ###                                                          
+###  Email : ymcmrs@gmail.com                                 ###
+###  Univ. : King Abdullah University of Science & Technology ###   
+#################################################################
 
 
 import numpy as np

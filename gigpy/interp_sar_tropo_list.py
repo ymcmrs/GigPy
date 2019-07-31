@@ -1,15 +1,11 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
 ###  Univ. : King Abdullah University of Science & Technology ###   
 #################################################################
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import sys
 import os
@@ -18,9 +14,8 @@ import subprocess
 import argparse
 import numpy as np
 import h5py
-from pygps import elevation_models
+from gigpy import elevation_models
 
-import pygps._utilities as ut
 from pykrige import OrdinaryKriging
 
 from tqdm import tqdm
@@ -45,7 +40,7 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    Generate high-resolution GPS-based tropospheric maps (delays & water vapor) for InSAR Geodesy & meteorology.
 '''

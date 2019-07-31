@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
@@ -15,8 +15,6 @@ import argparse
 import numpy as np
 import h5py
 import glob
-
-import pygps._utilities as ut
 
 
 ###############################################################
@@ -111,20 +109,20 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    Generate high-resolution map of GPS tropospheric measurements for synchronous SAR acquisitions.
 '''
 
 EXAMPLE = """example:
   
-  tropo_pygps.py timeseries.h5 geometryRadar.h5
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --type pwv 
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --type aps --parallel 4
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --elevation-model linear --type pwv --parallel 8
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --elevation-model linear --variogram-model spherical
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --elevation-model linear --interp-method kriging --type pwv
-  tropo_pygps.py timeseries.h5 geometryRadar.h5 --elevation-model onn_linear --interp-method kriging 
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type pwv 
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type aps --parallel 4
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --type pwv --parallel 8
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --variogram-model spherical
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --interp-method kriging --type pwv
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model onn_linear --interp-method kriging 
   
 ###################################################################################
 """
@@ -272,7 +270,7 @@ def main(argv):
         print('Done.')
         print('')
         print('Start to correct InSAR time-series tropospheric delays ...' )
-        call_str = 'diff_pygps.py ' + inps.ts_file + ' ' + ' timeseries_gps_aps_los.h5 --add  -o timeseries_gpsCor.h5'
+        call_str = 'diff_gigpy.py ' + inps.ts_file + ' ' + ' timeseries_gps_aps_los.h5 --add  -o timeseries_gpsCor.h5'
         os.system(call_str)
         print('Done.')
 

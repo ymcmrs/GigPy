@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-############################################################
-# Program is part of PyGPS v1.0                            #
-# Copyright(c) 2017, Yunmeng Cao                           #
-# Author:  Yunmeng Cao                                     #
-############################################################
+#################################################################
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
+###  Author: Yunmeng Cao                                      ###                                                          
+###  Email : ymcmrs@gmail.com                                 ###
+###  Univ. : King Abdullah University of Science & Technology ###   
+#################################################################
 
 
 import numpy as np
@@ -19,37 +21,6 @@ import dateutil.parser
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-def print_progress(iteration, total, prefix='calculating:', suffix='complete', decimals=1, barLength=50, elapsed_time=None):
-    """Print iterations progress - Greenstick from Stack Overflow
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : number of decimals in percent complete (Int) 
-        barLength   - Optional  : character length of bar (Int) 
-        elapsed_time- Optional  : elapsed time in seconds (Int/Float)
-    
-    Reference: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-    """
-    filledLength    = int(round(barLength * iteration / float(total)))
-    percents        = round(100.00 * (iteration / float(total)), decimals)
-    bar             = '#' * filledLength + '-' * (barLength - filledLength)
-    if elapsed_time:
-        sys.stdout.write('%s [%s] %s%s    %s    %s secs\r' % (prefix, bar, percents, '%', suffix, int(elapsed_time)))
-    else:
-        sys.stdout.write('%s [%s] %s%s    %s\r' % (prefix, bar, percents, '%', suffix))
-    sys.stdout.flush()
-    if iteration == total:
-        print("\n")
-
-    '''
-    Sample Useage:
-    for i in range(len(dateList)):
-        print_progress(i+1,len(dateList))
-    '''
-    return
 
 def download_atm_date(date0):
 
@@ -324,6 +295,7 @@ INTRODUCTION = '''GPS:
 EXAMPLE = '''EXAMPLES:
 
     download_gps_atm.py date_list
+    download_gps_atm.py date_list --parallel 4
 
 '''    
     
@@ -335,6 +307,8 @@ def cmdLineParse():
                                      epilog=INTRODUCTION+'\n'+EXAMPLE)
 
     parser.add_argument('date_list',help='Date list for downloading trop list.')
+    parser.add_argument('--parallel', dest='parallelNumb', type=int, default=1, 
+                        help='Enable parallel processing and Specify the number of processors.[default: 1]')
 
     
     inps = parser.parse_args()
@@ -356,7 +330,12 @@ def main(argv):
     #    call_str = 'download_gps_atm_date.py ' + DATE0
     #    os.system(call_str)
     
-    parallel_process(DATE, download_atm_date, n_jobs=8, use_kwargs=False, front_num=1)
+    print('')
+    print('-------------------------------------------------------')
+    print('Start to download the raw GPS tropospheric products ...')
+    print('The processor number used for downloading: %s' % str(inps.parallelNumb))
+    print('')
+    parallel_process(DATE, download_atm_date, n_jobs=inps.parallelNumb, use_kwargs=False, front_num=1)
     
     
 

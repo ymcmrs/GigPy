@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
@@ -15,7 +15,6 @@ import getopt
 import time
 import glob
 import argparse
-from pykrige import OrdinaryKriging
 import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -71,7 +70,7 @@ def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compressio
 
 INTRODUCTION = '''
 #############################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    Variogram model estimation of the GPS tropospheric measurements.
 '''

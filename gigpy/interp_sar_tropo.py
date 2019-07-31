@@ -1,15 +1,11 @@
 #! /usr/bin/env python
 #################################################################
-###  This program is part of PyGPS  v2.0                      ### 
+###  This program is part of GigPy  v1.0                      ### 
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
 ###  Univ. : King Abdullah University of Science & Technology ###   
 #################################################################
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
 
 import sys
 import os
@@ -18,9 +14,8 @@ import subprocess
 import argparse
 import numpy as np
 import h5py
-from pygps import elevation_models
+from gigpy import elevation_models
 
-import pygps._utilities as ut
 from pykrige import OrdinaryKriging
 
 from tqdm import tqdm
@@ -91,57 +86,6 @@ def function_trend(lat,lon,para):
     
     return data_trend
 
-
-def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
-    
-    FILE = gps_aps_h5
-    
-    gps_hei = read_hdf5(FILE,datasetName='gps_height')[0]
-    gps_lat = read_hdf5(FILE,datasetName='gps_lat')[0]
-    gps_lon = read_hdf5(FILE,datasetName='gps_lon')[0]
-    gps_nm = read_hdf5(FILE,datasetName='gps_name')[0]
-    gps_nm = list(gps_nm)
-
-    date = read_hdf5(FILE,datasetName='date')[0]
-    station = read_hdf5(FILE,datasetName='station')[0]
-    wzd = read_hdf5(FILE,datasetName='wzd_turb')[0]
-    tzd = read_hdf5(FILE,datasetName='tzd_turb')[0]
-    
-    wzd_trend = read_hdf5(FILE,datasetName='wzd_turb_trend')[0]
-    tzd_trend = read_hdf5(FILE,datasetName='tzd_turb_trend')[0]
-    
-    station= list(station[epoch])
-    wzd= list(wzd[epoch])
-    tzd= list(tzd[epoch])
-    
-    wzd_trend= list(wzd_trend[epoch])
-    tzd_trend= list(tzd_trend[epoch])
-    
-    k0 =9999
-    for i in range(len(station)):
-        if station[i].decode("utf-8")=='0.0':
-            if i < k0:
-                k0 =i
-    station = station[0:k0]
-    wzd = wzd[0:k0]     
-    tzd = tzd[0:k0]
-    
-    wzd_trend = wzd_trend[0:k0]     
-    tzd_trend = tzd_trend[0:k0]
-    
-    NN = len(station)
-    
-    hei = np.zeros((NN,))
-    lat = np.zeros((NN,))
-    lon = np.zeros((NN,))
-    for i in range(NN):
-        hei[i] = gps_hei[gps_nm.index(station[i])]
-        lat[i] = gps_lat[gps_nm.index(station[i])]
-        lon[i] = gps_lon[gps_nm.index(station[i])]
-    tzd_turb = tzd
-    wzd_turb = wzd
-    
-    return tzd_turb, wzd_turb, tzd_trend, wzd_trend, lat, lon
 
 def remove_numb(x,y,z,numb=0):
     
@@ -380,7 +324,7 @@ def cmdLineParse():
 
 INTRODUCTION = '''
 ##################################################################################
-   Copy Right(c): 2019, Yunmeng Cao   @PyGPS v2.0
+   Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    Generate high-resolution GPS-based tropospheric maps (delays & water vapor) for InSAR Geodesy & meteorology.
 '''

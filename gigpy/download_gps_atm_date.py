@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-############################################################
-# Program is part of PyGPS v1.0                            #
-# Copyright(c) 2017, Yunmeng Cao                           #
-# Author:  Yunmeng Cao                                     #
-############################################################
+#################################################################
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
+###  Author: Yunmeng Cao                                      ###                                                          
+###  Email : ymcmrs@gmail.com                                 ###
+###  Univ. : King Abdullah University of Science & Technology ###   
+#################################################################
 
 
 import numpy as np
@@ -15,40 +17,6 @@ import argparse
 import math
 import astropy.time
 import dateutil.parser
-
-
-
-def print_progress(iteration, total, prefix='calculating:', suffix='complete', decimals=1, barLength=50, elapsed_time=None):
-    """Print iterations progress - Greenstick from Stack Overflow
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : number of decimals in percent complete (Int) 
-        barLength   - Optional  : character length of bar (Int) 
-        elapsed_time- Optional  : elapsed time in seconds (Int/Float)
-    
-    Reference: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-    """
-    filledLength    = int(round(barLength * iteration / float(total)))
-    percents        = round(100.00 * (iteration / float(total)), decimals)
-    bar             = '#' * filledLength + '-' * (barLength - filledLength)
-    if elapsed_time:
-        sys.stdout.write('%s [%s] %s%s    %s    %s secs\r' % (prefix, bar, percents, '%', suffix, int(elapsed_time)))
-    else:
-        sys.stdout.write('%s [%s] %s%s    %s\r' % (prefix, bar, percents, '%', suffix))
-    sys.stdout.flush()
-    if iteration == total:
-        print("\n")
-
-    '''
-    Sample Useage:
-    for i in range(len(dateList)):
-        print_progress(i+1,len(dateList))
-    '''
-    return
 
 
 def float_yyyymmdd(DATESTR):

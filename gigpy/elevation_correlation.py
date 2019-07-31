@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-############################################################
-# Program is part of PyGPS v2.0                            #
-# Copyright(c) 2017-2019, Yunmeng Cao                      #
-# Author:  Yunmeng Cao                                     #
-############################################################
+#################################################################
+###  This program is part of GigPy  v1.0                      ### 
+###  Copy Right (c): 2019, Yunmeng Cao                        ###  
+###  Author: Yunmeng Cao                                      ###                                                          
+###  Email : ymcmrs@gmail.com                                 ###
+###  Univ. : King Abdullah University of Science & Technology ###   
+#################################################################
 
 
 import numpy as np
@@ -18,7 +20,7 @@ from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 from scipy.stats.stats import pearsonr
 
-from pygps import elevation_models
+from gigpy import elevation_models
 #### define dicts for model/residual/initial values ###############
 
 model_dict = {'linear': elevation_models.linear_elevation_model,
@@ -45,22 +47,6 @@ para_numb_dict = {'linear': 2,
                   'exp':2,
                   'exp_linear':3}
 
-#######################################################################################
-
-INTRODUCTION = '''
-    Modeling for the elevation-correlated tropospheric products: tropospheric delays, atmospehric water vapor ...    
-    Supported models: Linear, Onn, Onn-linear, Exponential, Exponential-linear.
-    
-    See alse:   search_gps.py, download_gps_atm.py, extract_sar_atm.py, 
-'''
-
-
-EXAMPLE = '''EXAMPLES:
-    elevation_correlation.py gps_aps.h5 -m onn
-    elevation_correlation.py gps_pwv.h5 -m onn_linear 
-    elevation_correlation.py gps_pwv.h5 -m exp -o gps_pwv_HgtCor.h5
-    elevation_correlation.py gps_aps.h5 -m onn -o gps_aps_HgtCor.h5
-'''
 
 def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
     
@@ -239,7 +225,23 @@ def cmdLineParse():
     
     return inps
 
+
+INTRODUCTION = '''
 ################################################################################################
+    Modeling for the elevation-correlated tropospheric products: tropospheric delays, atmospehric water vapor ...    
+    Supported models: Linear, Onn, Onn-linear, Exponential, Exponential-linear.
+    
+    See alse:   search_gps.py, download_gps_atm.py, extract_sar_atm.py, 
+'''
+
+
+EXAMPLE = '''EXAMPLES:
+    elevation_correlation.py gps_aps.h5 -m onn
+    elevation_correlation.py gps_pwv.h5 -m onn_linear 
+    elevation_correlation.py gps_pwv.h5 -m exp -o gps_pwv_HgtCor.h5
+    elevation_correlation.py gps_aps.h5 -m onn -o gps_aps_HgtCor.h5
+################################################################################################
+'''
 
 
 def main(argv):
