@@ -15,7 +15,7 @@ from __future__ import unicode_literals
 import numpy as np
 
 __doc__ = """
-PyGPS
+GigPy
 =======
 
 Code by Yunmeng Cap and the GigPy Developers
