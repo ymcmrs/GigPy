@@ -60,7 +60,7 @@ def cmdLineParse():
     parser.add_argument('--data', dest='data', choices = {'turb','aps','hgt','trend','sigma'}, default = 'aps',help = 'type of the high-resolution tropospheric map.[default: aps]')
     parser.add_argument('--type', dest='type', choices = {'tzd','wzd'}, default = 'tzd',help = 'type of the high-resolution tropospheric map.[default: tzd]')
     parser.add_argument('--absolute', dest='absolute', action='store_true',help='generate absolute value based tropospheric map. ')
-    
+    parser.add_argument('-o','--out', dest='out', help='Name of the output file.')
 
        
     inps = parser.parse_args()
@@ -80,7 +80,7 @@ EXAMPLE = """Example:
   generate_timeseries_tropo.py date_list timeseries.h5 --data aps --absolute 
   generate_timeseries_tropo.py date_list timeseries.h5 --data turb --type wzd
   generate_timeseries_tropo.py date_list timeseries.h5 --data hgt --absolute
-  generate_timeseries_tropo.py date_list timeseries.h5 --data trend --type tzd
+  generate_timeseries_tropo.py date_list timeseries.h5 --data trend --type tzd -o timeseries_gps_trend.h5
   
 ###################################################################################
 """
@@ -129,7 +129,9 @@ def main(argv):
         del meta['REF_X']
         del meta['REF_Y']
         
-    out_ts_gps = 'timeseries_gps_' + inps.data + '.h5'
+    if inps.out: out_ts_gps = inps.out
+    else: out_ts_gps = 'timeseries_gps_' + inps.data + '.h5'
+    
     datasetDict = dict()
     datasetDict['timeseries'] = ts_gps
     date_list = read_hdf5(ts_file,datasetName='date')[0]
