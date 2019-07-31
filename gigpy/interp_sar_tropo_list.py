@@ -29,7 +29,6 @@ def cmdLineParse():
     parser.add_argument('geo_file',help='input geometry file name (e.g., geometryRadar.h5).')
     parser.add_argument('--type', dest='type', choices = {'tzd','wzd'}, default = 'tzd',help = 'type of the high-resolution tropospheric map.[default: tzd]')
     parser.add_argument('--method', dest='method', choices = {'kriging','weight_distance'},default = 'kriging',help = 'method used to interp the high-resolution map. [default: kriging]')
-    parser.add_argument('-o','--out', dest='out_file', metavar='FILE',help='name of the prefix of the output file')
     parser.add_argument('--parallel', dest='parallelNumb', type=int, default=1, help='Enable parallel processing and Specify the number of processors.')
     parser.add_argument('--kriging-points-numb', dest='kriging_points_numb', type=int, default=20, help='Number of the closest points used for Kriging interpolation. [default: 20]')
        
@@ -49,7 +48,7 @@ EXAMPLE = """Example:
   
   interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --type tzd
   interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --type wzd --parallel 8
-  interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --method kriging -o 20190101_gps_aps_kriging.h5
+  interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --method kriging
   interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --method kriging --kriging-points-numb 15
   interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --method weight_distance
   interp_sar_tropo_list.py date_list gps_file geometryRadar.h5 --type tzd 
