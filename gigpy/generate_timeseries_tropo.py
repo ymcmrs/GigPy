@@ -160,7 +160,7 @@ def main(argv):
     #    del meta['REF_Y']
         
     if inps.out: out_ts_gps = inps.out
-    else: out_ts_gps = 'timeseries_gps_' + inps.data + '.h5'
+    else: out_ts_gps = 'timeseries_gps_' + inps.type + '.h5'
     
     datasetDict = dict()
     datasetDict['timeseries'] = ts_gps
@@ -168,7 +168,7 @@ def main(argv):
     #bperp = read_hdf5(ts_file,datasetName='bperp')[0]
     datasetDict['date'] = np.asarray(date_list,dtype = np.string_)
     #datasetDict['bperp'] = bperp
-
+    meta['FILE_TYPE'] ='timeseries'
     write_h5(datasetDict, out_ts_gps, metadata=meta, ref_file=None, compression=None)
     print('Done.')   
 

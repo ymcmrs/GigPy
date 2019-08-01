@@ -106,6 +106,7 @@ def main(argv):
         ff = np.cos(INC)
         S0 = 'los'
     
+    print(meta['FILE_TYPE'])
     if meta['FILE_TYPE'] == 'timeseries':
         data_type = 'timeseries'
         data0 = read_hdf5(data_file, datasetName = 'timeseries')[0]
@@ -121,8 +122,8 @@ def main(argv):
             
     else:
         
-        data_type = inps.data
-        data0 = read_hdf5(data_file, datasetName = inps.data)[0]
+        data_type = inps.type + '_sar'
+        data0 = read_hdf5(data_file, datasetName = data_type)[0]
 
         data = data0 * ff
         datasetDict[data_type] = data

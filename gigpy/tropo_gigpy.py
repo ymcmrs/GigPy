@@ -276,11 +276,11 @@ def main(argv):
     
     print('Done.')
     
-    if inps.type =='aps':
+    if inps.type =='tzd':
         print('')
         print('---------------------------------------')
         print('Transfer the atmospheric delays from zenith direction to Los direction ...')
-        call_str = 'zennith2los.py timeseries_gps_aps.h5 ' + inps.geo_file
+        call_str = 'zenith2los.py timeseries_gps_tzd.h5 ' + inps.geo_file
         os.system(call_str)
         print('Done.')
         print('')
