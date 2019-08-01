@@ -359,9 +359,27 @@ def main(argv):
     date_list = date_list.astype('U13')
     date_list = list(date_list)
 
+    
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    gig_atm_sar_raw_dir = gig_dir  + '/atm/sar_raw'
+    
+    gig_atm_sar_tzd_dir = gig_dir  + '/atm/sar_tzd'
+    gig_atm_sar_wzd_dir = gig_dir  + '/atm/sar_wzd'
+    
+    if not os.path.isdir(gig_atm_sar_tzd_dir):
+        os.mkdir(gig_atm_sar_tzd_dir)
+    
+    if not os.path.isdir(gig_atm_sar_wzd_dir):
+        os.mkdir(gig_atm_sar_wzd_dir)
+    
     if inps.out_file: OUT = inps.out_file
     else: OUT = date + '_' + inps.type + '.h5'
     
+    if inps.type =='tzd': OUT = gig_atm_sar_tzd_dir + '/' + OUT
+    elif inps.type =='wzd': OUT = gig_atm_sar_wzd_dir + '/' + OUT
 
     dem = read_hdf5(geom_file,datasetName='height')[0]
     inc = read_hdf5(geom_file,datasetName='incidenceAngle')[0]
@@ -428,9 +446,9 @@ def main(argv):
     #print(idx_list[split_numb-1])
     
     print('------------------------------------------------------------------------------')
-    if inps.type =='aps':
+    if inps.type =='tzd':
         print('Start to interpolate the high-resolution tropospheric delay for SAR acquisition: ' + date)
-    elif inps.type =='pwv':
+    elif inps.type =='wzd':
         print('Start to interpolate the high-resolution atmospheric water vapor for SAR acquisition: ' + date)
         
     if inps.method =='kriging':
@@ -478,7 +496,7 @@ def main(argv):
     
     write_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None)
     
-    
+    sys.exit(1)
 ###############################################################
 
 if __name__ == '__main__':
