@@ -29,18 +29,21 @@ def download_atm_date(date0):
     YEAR = ST[0:4]
     DAY = ST[4:]
     
-    PATH = os.getcwd()
-    gps_dir = PATH + '/GPS'
-    gps_atm_dir = PATH + '/GPS/atm'
-    gps_def_dir = PATH + '/GPS/def'
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    #gig_atm_sar_raw_dir = gig_dir  + '/atm/sar_raw'
     
-    if not os.path.isdir(gps_dir):
-        call_str = 'mkdir ' + gps_dir
-        os.system(call_str)
+    if not os.path.isdir(gig_dir):
+        os.mkdir(gig_dir)
     
-    if not os.path.isdir(gps_atm_dir):
-        call_str = 'mkdir ' + gps_atm_dir
-        os.system(call_str)
+    if not os.path.isdir(gig_atm_dir):
+        os.mkdir(gig_atm_dir)
+        
+    if not os.path.isdir(gig_atm_raw_dir):
+        os.mkdir(gig_atm_raw_dir)
+        
 
     ttt = 'ttt_' + DATE
     ttt0 = 'ttt0_' + DATE
@@ -103,8 +106,9 @@ def download_atm_date(date0):
         fl=0
         #print('No PWV-file is found.')
     
-    Trop_GPS = gps_atm_dir + '/' + 'Global_GPS_Trop_' + DATE 
+    Trop_GPS = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + DATE 
     #print(FILE)
+    
     if not os.path.isfile(FILE):    
         call_str = 'wget -q ftp://data-out.unavco.org/pub/products/troposphere/' + YEAR + '/' + DAY + '/' + FILE
         os.system(call_str)
@@ -129,7 +133,7 @@ def download_atm_date(date0):
         #print('Download finish.')
     
     if fl ==1:
-        Trop_PWV_GPS = gps_atm_dir + '/' + 'Global_GPS_PWV_' + DATE
+        Trop_PWV_GPS = gig_atm_raw_dir + '/' + 'Global_GPS_PWV_' + DATE
         
         FILE0 = FILE_PWV.replace('.gz','')
         if os.path.isfile(FILE0):
@@ -140,7 +144,17 @@ def download_atm_date(date0):
         call_str ='cp ' + FILE0 + ' ' + Trop_PWV_GPS
         os.system(call_str)
         
-        return
+        if os.path.isfile(FILE0):
+            os.remove(FILE0) 
+    
+    
+    os.remove(ttt) 
+    os.remove(ttt0) 
+    os.remove(ttt_aps) 
+    os.remove(ttt_pwv)
+    os.remove(ttt_size) 
+    
+    return
 
 def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=4):
     """
@@ -325,10 +339,6 @@ def main(argv):
     DATE = DATE.tolist()
     N=len(DATE)
 
-    #for i in range(N):
-    #    DATE0 = DATE[i]  
-    #    call_str = 'download_gps_atm_date.py ' + DATE0
-    #    os.system(call_str)
     
     print('')
     print('-------------------------------------------------------')
