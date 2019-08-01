@@ -156,33 +156,43 @@ def main(argv):
     YEAR = ST[0:4]
     DAY = ST[4:]
     
-    PATH = os.getcwd()
-    gps_dir = PATH + '/GPS'
-    gps_atm_dir = PATH + '/GPS/atm'
-    gps_def_dir = PATH + '/GPS/def'
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    #gps_def_dir = PATH + '/GPS/def'
     
-    if not os.path.isdir(gps_dir):
-        call_str = 'mkdir ' + gps_dir
-        os.system(call_str)
+    if not os.path.isdir(gig_dir):
+        os.mkdir(gig_dir)
     
-    if not os.path.isdir(gps_atm_dir):
-        call_str = 'mkdir ' + gps_atm_dir
-        os.system(call_str)
-
-    call_str = 'curl ftp://data-out.unavco.org/pub/products/troposphere/' + YEAR + '/' + DAY + '/' + ' >ttt' 
+    if not os.path.isdir(gig_atm_dir):
+        os.mkdir(gig_atm_dir)
+        
+    if not os.path.isdir(gig_atm_raw_dir):
+        os.mkdir(gig_atm_raw_dir)
+        
+        
+    ttt = gig_atm_dir + '/ttt_' + DATE
+    ttt_aps = gig_atm_dir + '/ttt_aps_' + DATE
+    ttt0 = gig_atm_dir + '/ttt0_' + DATE
+    ttt_size = gig_atm_dir + '/ttt_size_' + DATE
+    
+    ttt_pwv = gig_atm_dir + '/ttt_pwv_' + DATE
+    
+    call_str = 'curl ftp://data-out.unavco.org/pub/products/troposphere/' + YEAR + '/' + DAY + '/' + ' > ' + ttt 
     os.system(call_str)    
     
     # get aps file for downloading 
-    call_str ="grep 'cwu' ttt > ttt_aps"
+    call_str ="grep 'cwu' " + ttt +' > ' + ttt_aps
     os.system(call_str)
-    call_str ="grep '.gz' ttt_aps > ttt0"
+    call_str ="grep '.gz' " + ttt_aps + ' > ' + ttt0
     os.system(call_str)
-    BB = np.loadtxt('ttt0',dtype=np.str)
+    BB = np.loadtxt(ttt0,dtype=np.str)
     
-    call_str = "awk '{print $5}' ttt0 >ttt_size"
+    call_str = "awk '{print $5}' " + ttt0 + ' > ' + ttt_size
     os.system(call_str)
     
-    AA = np.loadtxt('ttt_size')
+    AA = np.loadtxt(ttt_size)
     kk = AA.size
     
     if kk>1:
@@ -195,19 +205,19 @@ def main(argv):
     
     
     # get pwv file for downloading 
-    call_str ="grep 'nmt' ttt > ttt_pwv"
+    call_str ="grep 'nmt' " + ttt + ' > ' + ttt_pwv
     os.system(call_str)
     
     fl =1
-    if os.path.getsize('ttt_pwv') > 0:
-        call_str ="grep '.gz' ttt_pwv > ttt0"
+    if os.path.getsize(ttt_pwv) > 0:
+        call_str ="grep '.gz' " + ttt_pwv + ' > ' + ttt0
         os.system(call_str)
-        BB = np.loadtxt('ttt0',dtype=np.str)
+        BB = np.loadtxt(ttt0 , dtype=np.str)
     
-        call_str = "awk '{print $5}' ttt0 >ttt_size"
+        call_str = "awk '{print $5}' " +  ttt0 + ' > ' + ttt_size
         os.system(call_str)
     
-        AA = np.loadtxt('ttt_size')
+        AA = np.loadtxt(ttt_size)
         kk = AA.size
         
         if kk>1:
@@ -222,7 +232,7 @@ def main(argv):
         fl=0
         print('No PWV-file is found.')
     
-    Trop_GPS = gps_atm_dir + '/' + 'Global_GPS_Trop_' + DATE 
+    Trop_GPS = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + DATE 
     
     if not os.path.isfile(FILE):    
         call_str = 'wget -q ftp://data-out.unavco.org/pub/products/troposphere/' + YEAR + '/' + DAY + '/' + FILE
@@ -250,17 +260,25 @@ def main(argv):
         print('Download finish.')
     
     if fl ==1:
-        Trop_PWV_GPS = gps_atm_dir + '/' + 'Global_GPS_PWV_' + DATE
+        Trop_PWV_GPS = gig_atm_raw_dir + '/' + 'Global_GPS_PWV_' + DATE
         
         FILE0 = FILE_PWV.replace('.gz','')
         if os.path.isfile(FILE0):
             os.remove(FILE0)
         call_str = 'gzip -d ' + FILE_PWV
         os.system(call_str)
-    
+        
         call_str ='cp ' + FILE0 + ' ' + Trop_PWV_GPS
         os.system(call_str)
+        
+        os.remove(FILE0)
 
+    os.remove(ttt)
+    os.remove(ttt_aps) 
+    os.remove(ttt0)
+    os.remove(ttt_size)
+    
+    os.remove(ttt_pwv)  
     #if inps.station_name:
     #    DD=readdate(inps.station_name)
     #    k = len(DD)
