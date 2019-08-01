@@ -109,9 +109,14 @@ def main(argv):
     else:
         date_list = [os.path.basename(x).split('_')[0] for x in glob.glob(atm_dir + '/*_' + inps.type + '.h5')]
         #date_list = date_list.tolist()
+    date_list = list(map(int, date_list))
+    date_list = sorted(date_list)
+    date_list = list(map(str, date_list))
     
     N = len(date_list)
-    print('Date list of the timeseries file:')
+    print('')
+    print('-----------------------------')
+    print('Date list of the time-series:')
     data_list = []
     for i in range(N):
         print(date_list[i])
@@ -123,6 +128,8 @@ def main(argv):
     LENGTH = int(meta['LENGTH'])
     #REF_X = int(meta['REF_X'])
     #REF_Y = int(meta['REF_Y'])
+    print('')
+    print('---------------------------------')
     
     if inps.data =='aps': S0 = 'aps_sar'       # total tropospheric map (tropospheric delay & atmospheric water vapor)
     elif inps.data =='turb': S0 ='turb_sar'    # turbulent tropospheric map
@@ -132,7 +139,7 @@ def main(argv):
     
     ts_gps = np.zeros((len(date_list),LENGTH,WIDTH),dtype = np.float32)
     for i in range(len(date_list)):
-        file0 = date_list[i] + '_' + inps.type + '.h5'
+        file0 = atm_dir + '/' + date_list[i] + '_' + inps.type + '.h5'
         data0 = read_hdf5(file0,datasetName = S0)[0]
         #if not inps.absolute:
         #    ts_gps[i,:,:] = data0 - data0[REF_Y,REF_X]
