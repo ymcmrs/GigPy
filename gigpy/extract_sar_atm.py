@@ -19,39 +19,8 @@ import astropy.time
 import dateutil.parser
 import glob
 
-
-def print_progress(iteration, total, prefix='calculating:', suffix='complete', decimals=1, barLength=50, elapsed_time=None):
-    """Print iterations progress - Greenstick from Stack Overflow
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : number of decimals in percent complete (Int) 
-        barLength   - Optional  : character length of bar (Int) 
-        elapsed_time- Optional  : elapsed time in seconds (Int/Float)
-    
-    Reference: http://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
-    """
-    filledLength    = int(round(barLength * iteration / float(total)))
-    percents        = round(100.00 * (iteration / float(total)), decimals)
-    bar             = '#' * filledLength + '-' * (barLength - filledLength)
-    if elapsed_time:
-        sys.stdout.write('%s [%s] %s%s    %s    %s secs\r' % (prefix, bar, percents, '%', suffix, int(elapsed_time)))
-    else:
-        sys.stdout.write('%s [%s] %s%s    %s\r' % (prefix, bar, percents, '%', suffix))
-    sys.stdout.flush()
-    if iteration == total:
-        print("\n")
-
-    '''
-    Sample Useage:
-    for i in range(len(dateList)):
-        print_progress(i+1,len(dateList))
-    '''
-    return
-
+from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 def float_yyyymmdd(DATESTR):
     year = float(DATESTR.split('-')[0])
@@ -160,16 +129,118 @@ def readdate(DATESTR):
             DD.append(str(int(s1.split(',')[i])))
             
     return DD
+
+def extract_sar_aps(data0):
+    
+    DATE0,JDSEC_SAR,GPS_NM = data0
+    DD = GPS_NM
+    
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    gig_atm_sar_raw_dir = gig_dir  + '/atm/sar_raw'
+    
+    Trop_SAR = gig_atm_sar_raw_dir + '/SAR_GPS_Trop_' + str(DATE0)
+    Trop_GPS = gig_atm_raw_dir + '/Global_GPS_Trop_' + str(DATE0)
+    # remove the first four lines
+    count = len(open(Trop_GPS,'r').readlines())
+    
+    tt_all = 'tt_all_' + str(DATE0)
+    tt_name = 'tt_name_' + str(DATE0)
+    
+    call_str = 'sed -n 5,' + str(count) + 'p ' +  Trop_GPS + ' >' + tt_all
+    os.system(call_str)
+    # extract all of the available station names
+    call_str = "awk '{print $10}' " + tt_all + ' >' + tt_name
+    os.system(call_str)
+    GPS_all = np.loadtxt(tt_name, dtype = np.str)
+    DD_all = GPS_all
+    k_all=len(DD_all)
+    #print(k_all)
+    DD_all.tolist()
+    RR = np.zeros((k_all,),dtype = bool)
+    for i in range(k_all):
+        k0 = DD_all[i]
+        if k0 in DD:
+            RR[i] = 1
+    data = np.loadtxt(tt_all, dtype = np.str)
+    data_use = data[RR]
+    #print(data_use.shape)
+    JDSEC_all = data_use[:,0]
+    #JDSEC_all = np.asarray(JDSEC_all,dtype = int)
+    nn = len(JDSEC_all)
+    RR2 = np.zeros((nn,),dtype = bool)
+    for i in range(nn):
+        #print(int(float(JDSEC_all[i])))
+        if int(float(JDSEC_all[i])) == JDSEC_SAR:
+            RR2[i] =1
+    data_use_final = data_use[RR2]
+    #print(data_use_final.shape)     
+    np.savetxt(Trop_SAR,data_use_final,fmt='%s', delimiter=',')    
+    os.remove(tt_all)
+    os.remove(tt_name)
+    
+    return
         
+def extract_sar_pwv(data0):
+        
+    DATE0,HH0,GPS_NM = data0
+    DD = GPS_NM
+    
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    gig_atm_sar_raw_dir = gig_dir  + '/atm/sar_raw'
+    
+    DATE0 = unitdate(DATE0)
+    
+    PWV_GPS = gig_atm_raw_dir + '/Global_GPS_PWV_' + str(DATE0)
+    PWV_SAR = gig_atm_sar_raw_dir + '/SAR_GPS_PWV_' + str(DATE0)
+    
+    tt_all = 'tt_all_' + str(DATE0)
+    tt_name = 'tt_name_' + str(DATE0)
+        
+    count = len(open(PWV_GPS,'r').readlines())
+    call_str = 'sed -n 2,' + str(count) + 'p ' +  PWV_GPS + ' >' + tt_all
+    os.system(call_str)
+    # extract all of the available station names
+    call_str = "awk '{print $18}' " + tt_all + ' >' + tt_name
+    os.system(call_str)
+        
+    GPS_all = np.loadtxt(tt_name, dtype = np.str)
+    DD_all = GPS_all
+    k_all=len(DD_all)
+    #print(k_all)
+    DD_all.tolist()
+        
+    data = np.loadtxt(tt_all, dtype = np.str)
+    row,col = data.shape
+    RR = np.zeros((row,),dtype = bool)
+    for i in range(row):
+        k0 = DD_all[i]
+        if k0 in DD:
+            RR[i] = 1
+    data_use = data[RR]
+    #print(data_use.shape)
+    HH_all = data_use[:,2]
+    nn = len(HH_all)
+    RR2 = np.zeros((nn,),dtype = bool)
+    for i in range(nn):
+        if int(float(HH_all[i])) == HH0:
+            RR2[i] =1
+    data_use_final = data_use[RR2]
+    #print(data_use_final.shape)     
+    np.savetxt(PWV_SAR,data_use_final,fmt='%s', delimiter=',')  
+    os.remove(tt_all)
+    os.remove(tt_name)
+    
+    return
+    
 
 def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compression=None):
-    #output = 'variogramStack.h5'
-    'lags                  1 x N '
-    'semivariance          M x N '
-    'sills                 M x 1 '
-    'ranges                M x 1 '
-    'nuggets               M x 1 '
-    
+
     if os.path.isfile(out_file):
         print('delete exsited file: {}'.format(out_file))
         os.remove(out_file)
@@ -191,6 +262,59 @@ def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compressio
     print('finished writing to {}'.format(out_file))
         
     return out_file    
+
+def get_lack_datelist(date_list, date_list_exist):
+    date_list0 = []
+    for k0 in date_list:
+        if k0 not in date_list_exist:
+            date_list0.append(k0)
+    return date_list0
+
+def parallel_process(array, function, n_jobs=16, use_kwargs=False, front_num=4):
+    """
+        A parallel version of the map function with a progress bar. 
+
+        Args:
+            array (array-like): An array to iterate over.
+            function (function): A python function to apply to the elements of array
+            n_jobs (int, default=16): The number of cores to use
+            use_kwargs (boolean, default=False): Whether to consider the elements of array as dictionaries of 
+                keyword arguments to function 
+            front_num (int, default=3): The number of iterations to run serially before kicking off the parallel job. 
+                Useful for catching bugs
+        Returns:
+            [function(array[0]), function(array[1]), ...]
+    """
+    #We run the first few iterations serially to catch bugs
+    if front_num > 0:
+        front = [function(**a) if use_kwargs else function(a) for a in array[:front_num]]
+    #If we set n_jobs to 1, just run a list comprehension. This is useful for benchmarking and debugging.
+    if n_jobs==1:
+        return front + [function(**a) if use_kwargs else function(a) for a in tqdm(array[front_num:])]
+    #Assemble the workers
+    with ProcessPoolExecutor(max_workers=n_jobs) as pool:
+        #Pass the elements of array into function
+        if use_kwargs:
+            futures = [pool.submit(function, **a) for a in array[front_num:]]
+        else:
+            futures = [pool.submit(function, a) for a in array[front_num:]]
+        kwargs = {
+            'total': len(futures),
+            'unit': 'it',
+            'unit_scale': True,
+            'leave': True
+        }
+        #Print out the progress as tasks complete
+        for f in tqdm(as_completed(futures), **kwargs):
+            pass
+    out = []
+    #Get the results from the futures. 
+    for i, future in tqdm(enumerate(futures)):
+        try:
+            out.append(future.result())
+        except Exception as e:
+            out.append(e)
+    return front + out
 ###################################################################################################
 
 INTRODUCTION = '''
@@ -200,8 +324,8 @@ INTRODUCTION = '''
 EXAMPLE = '''EXAMPLES:
 
     extract_sar_atm.py search_gps.txt imaging_time [extract all of the data inside the default folder]
-    extract_sar_atm.py search_gps.txt imaging_time --date 20180101
-    extract_sar_atm.py search_gps.txt imaging_time --date_txt date_list.txt
+    extract_sar_atm.py search_gps.txt imaging_time --date 20180101 --parallel 4
+    extract_sar_atm.py search_gps.txt imaging_time --date-txt date_list.txt
 
 '''    
 ##################################################################################################   
@@ -216,6 +340,8 @@ def cmdLineParse():
     parser.add_argument('imaging_time',help='Center line UTC sec.')
     parser.add_argument('-d', '--date', dest='date_list', nargs='*',help='date list to extract.')
     parser.add_argument('--date-txt', dest='date_txt',help='date list text to extract.')
+    parser.add_argument('--parallel', dest='parallelNumb', type=int, default=1, 
+                        help='Enable parallel processing and Specify the number of processors.[default: 1]')
     
     inps = parser.parse_args()
 
@@ -236,22 +362,57 @@ def main(argv):
             if (list0 not in date_list) and is_number(list0):
                 date_list.append(list0)
     
-    path0 = os.getcwd()
-    gps_dir = path0 + '/GPS/atm'
+    root_path = os.getcwd()
+    gig_dir = root_path + '/gigpy'
+    gig_atm_dir = gig_dir  + '/atm'
+    gig_atm_raw_dir = gig_dir  + '/atm/raw'
+    gig_atm_sar_raw_dir = gig_dir  + '/atm/sar_raw'
     
+    if not os.path.isdir(gig_atm_sar_raw_dir):
+        os.mkdir(gig_atm_sar_raw_dir)
+    
+    print('')
+    print('--------------------------------------------')
     if (not inps.date_txt) and (not inps.date_list):
-        print('Obtain the GPS data-date automatically from %s' % gps_dir)
-        date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(gps_dir + '/Global_GPS_Trop*')]
+        print('Obtain the GPS data-date automatically from %s' % gig_atm_raw_dir)
+        date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(gig_atm_raw_dir + '/Global_GPS_Trop*')]
         
-    date_list = list(map(int, date_list))
-    date_list = sorted(date_list)
-    N = len(date_list)
-    print('---------------------------------------')
-    print('Total number of extracted date: %s ' % str(len(date_list)))
-    for k0 in date_list:
-        print(k0)
-    #print('---------------------------------------')
+    date_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(gig_atm_sar_raw_dir + '/SAR_GPS_Trop*')]
+    date_list_extract = get_lack_datelist(date_list, date_list_exist)
     
+    print('Existed SAR synchoronous dataset: %s' % str(len(date_list_exist)))
+    print('Number of dataset need to be extracted: %s' % str(len(date_list_extract)))
+    print('')
+    
+    aps_list_no = []
+    pwv_list_no = []
+    
+    aps_list_yes = []
+    pwv_list_yes = []
+    for k0 in date_list_extract:
+        s0_aps = gig_atm_raw_dir + '/Global_GPS_Trop_' + k0
+        s0_pwv = gig_atm_raw_dir + '/Global_GPS_PWV_' + k0
+        
+        if not os.path.isfile(s0_aps): aps_list_no.append(k0)
+        else: aps_list_yes.append(k0)
+            
+        if not os.path.isfile(s0_pwv): pwv_list_no.append(k0)
+        else: pwv_list_yes.append(k0)
+    
+    if len(aps_list_no) > 0:
+        print('The following raw-delay data are not downloaded/available: ')
+        for k0 in aps_list_no:
+            print(k0)
+        print('Number of the delay-data to be extracted: %s' % str(len(aps_list_yes)))
+    else:
+        print('All of the to be extracted delay-data are available.')
+        print('Number of the delay-data to be extracted: %s' % str(len(aps_list_yes)))
+        
+    print('')
+    print('Start to extract the SAR synchoronous tropospheric dataset ...')
+    print('Number of the parallel processors used: %s' % str(inps.parallelNumb))
+    
+    # adjust the SAR acquisition time
     t0 = inps.imaging_time
     SST,HH = yyyy2yyyymmddhhmmss(float(t0))
     t0 =float(t0)/3600/24
@@ -260,21 +421,19 @@ def main(argv):
     t0 = t0 * 300
     
     hh0 = float(t0)/3600
-    HH0 = int(round(float(hh0)/2)*2)
+    HH0 = int(round(float(hh0)/2)*2) # for extracting the atmospheric water vapor data
     Tm =str(int(t0))
     
+    # adjust the gps_txt file
     GPS = np.loadtxt(inps.gps_txt, dtype = np.str)
     DD = GPS[:,0]
     k=len(DD)
     DD.tolist()
     
-    print('---------------------')
-    print('Extract Tropospheric Delays: ')
-    for i in range(N):
-        #print('---------------------')
-        #print('Job of Extract Tropospheric Delays: ' + str(int(i+1)) + '/' + str(int(N)))
-        DATE0 = str(date_list[i])
-        DATE0 = unitdate(DATE0)
+    
+    data_parallel = []
+    for k0 in aps_list_yes:
+        DATE0 = unitdate(k0)
         
         dt = dateutil.parser.parse(DATE0)
         time = astropy.time.Time(dt)
@@ -282,132 +441,44 @@ def main(argv):
         JDSEC = JD*24*3600        
         JDSEC_SAR = int(JDSEC + t0)
         
-        Trop_GPS = gps_dir + '/Global_GPS_Trop_' + str(DATE0)
-        Trop_SAR = gps_dir + '/SAR_GPS_Trop_' + str(DATE0)
-        tt_all = 'tt_' + str(DATE0)
-        tt_name = 'tt_name_' + str(DATE0)
+        data0 = (k0,JDSEC_SAR,DD)
+        data_parallel.append(data0)
+    
+    # Start to extract data using parallel process
+    parallel_process(data_parallel, extract_sar_aps, n_jobs=inps.parallelNumb, use_kwargs=False, front_num=1)
+    
+    print('')
+    print('--------------------------------------------')
+    if len(pwv_list_no) > 0:
+        print('The following raw-pwv data are not downloaded/available: ')
+        for k0 in pwv_list_no:
+            print(k0)
+        print('Number of the pwv-data to be extracted: %s' % str(len(pwv_list_yes)))
+    else:
+        print('All of the to be extracted pwv-data are available.')
+        print('Number of the pwv-data to be extracted: %s' % str(len(pwv_list_yes)))
         
-        if os.path.isfile(Trop_SAR):
-            if os.path.getsize(Trop_SAR)==0:
-                os.remove(Trop_SAR)
+    print('')
+    print('Start to extract the SAR synchronous atmospheric water vapor dataset ...')
+    print('Number of the parallel processors used: %s' % str(inps.parallelNumb))
+    
+    data_parallel = []
+    for k0 in aps_list_yes:
         
-        if not os.path.isfile(Trop_GPS):
-            #print('% is not found.' % Trop_GPS)
-            #SSS = DATE0 + '[No]'
-            SSS = DATE0 + ' [No ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-        elif os.path.isfile(Trop_SAR):
-            SSS = DATE0 + ' [Yes ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-        else:
-            #SSS = DATE0 + '[Yes]'
-            SSS = DATE0 + ' [Yes ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-            Trop_SAR = gps_dir + '/SAR_GPS_Trop_' + str(DATE0)
-            # remove the first four lines
-            count = len(open(Trop_GPS,'r').readlines())
-            call_str = 'sed -n 5,' + str(count) + 'p ' +  Trop_GPS + ' >' + tt_all
-            os.system(call_str)
-            # extract all of the available station names
-            call_str = "awk '{print $10}' " + tt_all + ' >' + tt_name
-            os.system(call_str)
-            
-            GPS_all = np.loadtxt(tt_name, dtype = np.str)
-            DD_all = GPS_all
-            k_all=len(DD_all)
-            #print(k_all)
-            DD_all.tolist()
-        
-            RR = np.zeros((k_all,),dtype = bool)
-            for i in range(k_all):
-                k0 = DD_all[i]
-                if k0 in DD:
-                    RR[i] = 1
-        
-            data = np.loadtxt(tt_all, dtype = np.str)
-            data_use = data[RR]
-            #print(data_use.shape)
-        
-            JDSEC_all = data_use[:,0]
-            #JDSEC_all = np.asarray(JDSEC_all,dtype = int)
-            nn = len(JDSEC_all)
-            RR2 = np.zeros((nn,),dtype = bool)
-            for i in range(nn):
-                #print(int(float(JDSEC_all[i])))
-                if int(float(JDSEC_all[i])) == JDSEC_SAR:
-                    RR2[i] =1
-
-            data_use_final = data_use[RR2]
-            #print(data_use_final.shape)     
-            np.savetxt(Trop_SAR,data_use_final,fmt='%s', delimiter=',')    
-            os.remove(tt_all)
-            os.remove(tt_name)
-        
-    print('---------------------')
-    print('Extract Atmospheric PWV: ')    
-    ## Extract PWV data ####     
-    for i in range(N):
-        #print('---------------------')
-        #print('Extract Atmospheric PWV: ' + str(int(i+1)) + '/' + str(int(N)))
-        DATE0 = str(date_list[i])
-        DATE0 = unitdate(DATE0)
-        PWV_GPS = gps_dir + '/Global_GPS_PWV_' + str(DATE0)
-        PWV_SAR = gps_dir + '/SAR_GPS_PWV_' + str(DATE0)
-        if os.path.isfile(PWV_SAR):
-            if os.path.getsize(PWV_SAR)==0:
-                os.remove(PWV_SAR)
-                
-        if not os.path.isfile(PWV_GPS):
-            #print('% is not found.' % PWV_GPS)
-            SSS = DATE0 + ' [No ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-        elif os.path.isfile(PWV_SAR):
-            SSS = DATE0 + ' [Yes ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-        else:
-            SSS = DATE0 + ' [Yes ' + str(int(i+1)) + '/' + str(int(N)) + ']'
-            print_progress(i+1, N, prefix='Date: ', suffix=SSS)
-
-            tt_all = 'tt_' + str(DATE0)
-            tt_name = 'tt_name_' + str(DATE0)
-            
-            count = len(open(PWV_GPS,'r').readlines())
-            call_str = 'sed -n 2,' + str(count) + 'p ' +  PWV_GPS + ' >' + tt_all
-            os.system(call_str)
-            # extract all of the available station names
-            call_str = "awk '{print $18}' " + tt_all + ' >' + tt_name
-            os.system(call_str)
-            
-            GPS_all = np.loadtxt(tt_name, dtype = np.str)
-            DD_all = GPS_all
-            k_all=len(DD_all)
-            #print(k_all)
-            DD_all.tolist()
-            
-            data = np.loadtxt(tt_all, dtype = np.str)
-            row,col = data.shape
-            RR = np.zeros((row,),dtype = bool)
-            for i in range(row):
-                k0 = DD_all[i]
-                if k0 in DD:
-                    RR[i] = 1
-            data_use = data[RR]
-            #print(data_use.shape)
-            HH_all = data_use[:,2]
-            nn = len(HH_all)
-            RR2 = np.zeros((nn,),dtype = bool)
-            for i in range(nn):
-                if int(float(HH_all[i])) == HH0:
-                    RR2[i] =1
-
-            data_use_final = data_use[RR2]
-            #print(data_use_final.shape)     
-            np.savetxt(PWV_SAR,data_use_final,fmt='%s', delimiter=',')  
-            os.remove(tt_all)
-            os.remove(tt_name)
-            
+        data0 = (k0,HH0,DD)
+        data_parallel.append(data0)
+    
+    # Start to extract data using parallel process
+    parallel_process(data_parallel, extract_sar_pwv, n_jobs=inps.parallelNumb, use_kwargs=False, front_num=1)
+    
+     
 ################### generate gps_aps.h5 & gps_pwv.h5 ################################
-    PATH = gps_dir
+    print('')
+    print('')
+    print('--------------------------------------------')
+    print('Start to convert the availabe SAR synchronous GPS data into hdf5 file ...')
+    print('')
+    PATH = gig_atm_sar_raw_dir
     #data_list = glob.glob(PATH + '/SAR_GPS_Trop*')
     date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(PATH + '/SAR_GPS_Trop*')]
     
@@ -460,7 +531,7 @@ def main(argv):
     meta['UNIT'] = 'm'
     meta['DATA_TYPE'] = 'aps'
     
-    write_gps_h5(datasetDict, 'gps_aps.h5', metadata=meta, ref_file=None, compression=None)
+    write_gps_h5(datasetDict, 'gps_aps.h5', metadata = meta, ref_file = None, compression = None)
     
 #####################################################################
     #data_list = glob.glob(PATH + '/SAR_GPS_PWV*')
