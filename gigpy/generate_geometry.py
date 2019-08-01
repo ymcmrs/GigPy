@@ -14,6 +14,20 @@ import getopt
 import array
 import argparse
 from skimage import io
+import h5py
+
+from skimage.transform import rescale
+#from skimage.transform import rescale,pyramid_reduce
+#import cv2
+#import scipy.ndimage
+
+def read_attr(fname):
+    # read hdf5
+    with h5py.File(fname, 'r') as f:
+        atr = dict(f.attrs)
+        
+    return atr
+
 
 def get_sufix(STR):
     n = len(STR.split('.'))
@@ -121,7 +135,7 @@ def cmdLineParse():
 
     parser.add_argument('--region',dest = 'region',help='Research region, west/east/south/north.')
     parser.add_argument('--ref', dest='ref_file', help='Reference hdf5 file which includes the corners info.')
-    parser.add_argument('--resolution', dest='resolution', help='Spatial resolution of the output geometry file.')
+    parser.add_argument('--resolution', dest='resolution', type=float, default=30.0, help='Spatial resolution of the output geometry file.')
     parser.add_argument('-o', dest='out', help='Output name of the geometry file.')
 
     inps = parser.parse_args()
@@ -141,9 +155,11 @@ def main(argv):
         region = inps.region
         west,south,east,north = read_region(region)
     elif inps.ref_file:
-        meta = read_attr(ref_file)
+        meta = read_attr(inps.ref_file)
         west,south,east,north = get_meta_corner(meta)
-        
+    
+    # rescale, the original resolution is 30 m
+    k0_rescale = 30/inps.resolution
    
     if inps.out: OUT = inps.out
     else: OUT = 'geometry.h5'
@@ -190,17 +206,27 @@ def main(argv):
     
     dem_data = io.imread(DEM)
     dem_data = np.asarray(dem_data, dtype = np.float32)
-    row, col = dem_data.shape
+    dem_rescaled = rescale(dem_data, k0_rescale,multichannel=False, anti_aliasing=False)
+    #dem_rescaled = cv2.resize(dem_data,None,fx=k0_rescale, fy=k0_rescale, interpolation = cv2.INTER_LINEAR)
+    #dem_rescaled = scipy.ndimage.zoom(dem_data, k0_rescale, order=1)
+    #dem_rescaled = pyramid_reduce(dem_data, downscale=1/k0_rescale, sigma=None, order=1, mode='reflect', cval=0, multichannel=False)
+
+    
+    
+    row, col = dem_rescaled.shape
     
     x = np.arange(0,col)
     y = np.arange(0,row)
     xv, yv = np.meshgrid(x, y)
 
-    LAT = float(NORTH) + yv*float(post_Lat)
-    LON = float(WEST) + xv*float(post_Lon)
+    post_Lat1 = float(post_Lat)/k0_rescale
+    post_Lon1 = float(post_Lon)/k0_rescale
+    
+    LAT = float(Corner_LAT) + yv*float(post_Lat1)
+    LON = float(Corner_LON) + xv*float(post_Lon1)
     
     datasetDict = dict()
-    datasetDict['height'] = dem_data
+    datasetDict['height'] = dem_rescaled
     datasetDict['latitude'] = np.asarray(LAT,dtype = np.float32)
     datasetDict['longitude'] = np.asarray(LON,dtype = np.float32)
     
@@ -208,10 +234,10 @@ def main(argv):
     meta['WIDTH'] = col
     meta['LENGTH'] = row
     meta['FILE_TYPE'] = 'geometry'
-    meta['Y_FIRST'] = str(NORTH)
-    meta['X_FIRST'] = str(WEST)
-    meta['Y_STEP'] =str(post_Lat)
-    meta['X_STEP'] = str(post_Lon)
+    meta['Y_FIRST'] = str(Corner_LAT)
+    meta['X_FIRST'] = str(Corner_LON)
+    meta['Y_STEP'] =str(float(post_Lat)/k0_rescale)
+    meta['X_STEP'] = str(float(post_Lon)/k0_rescale)
     
     
     write_h5(datasetDict, OUT , metadata=meta, ref_file=None, compression=None)
