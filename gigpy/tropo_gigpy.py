@@ -133,13 +133,28 @@ def main(argv):
     inps = cmdLineParse() 
     ts_file = inps.ts_file
     geo_file = inps.geo_file
+    
     root_dir = os.getcwd()
-    gps_dir = root_dir + '/GPS'
-    atm_dir = gps_dir + '/atm'
+    gig_dir = root_dir + '/gigpy'
+    atm_dir = root_dir + '/gigpy/atm'
+    atm_raw_dir = root_dir + '/gigpy/atm/raw'
+    atm_sar_raw_dir = root_dir + '/gigpy/atm/sar_raw'
+    atm_sar_tzd_dir = root_dir + '/gigpy/atm/sar_tzd'
+    atm_sar_wzd_dir = root_dir + '/gigpy/atm/sar_wzd'
+    
+    if inps.type =='tzd': atm_sar_dir = atm_sar_tzd_dir
+    elif inps.type =='wzd': atm_sar_dir = atm_sar_wzd_dir
+    
+    if not os.path.isdir(gig_dir): os.mkdir(gig_dir)
+    if not os.path.isdir(atm_dir): os.mkdir(atm_dir)
+    if not os.path.isdir(atm_raw_dir): os.mkdir(atm_raw_dir)
+    if not os.path.isdir(atm_sar_raw_dir): os.mkdir(atm_sar_raw_dir)
+    if not os.path.isdir(atm_sar_tzd_dir): os.mkdir(atm_sar_tzd_dir)
+    if not os.path.isdir(atm_sar_wzd_dir): os.mkdir(atm_sar_wzd_dir)
     
     meta = read_attr(ts_file)
     
-    if not os.path.isfile('search_gps.txt'):
+    if not os.path.isfile('gps_station_info.txt'):
         print('----------------------------------------------------------------')
         print('Start to search available GPS tations over the research area...')
         call_str = 'search_gps.py -f ' + ts_file
@@ -147,18 +162,18 @@ def main(argv):
         print('')
     else:
         print('')
-        print('----------------------------------------------------------------')
-        print('search_gps.txt exist, skip search gps stations.')
+        print('------------------------------------------------------')
+        print('gps_station_info.txt exist, skip search gps stations.')
         print('')
     
-    if not os.path.isdir(gps_dir): 
-        os.mkdir(gps_dir)
-        print('Generate GPS directory: %s' % gps_dir)
-    if not os.path.isdir(atm_dir): 
-        os.mkdir(atm_dir)
-        print('Generate GPS-atm directory: %s' % atm_dir)
+    #if not os.path.isdir(gps_dir): 
+    #    os.mkdir(gps_dir)
+    #    print('Generate GPS directory: %s' % gps_dir)
+    #if not os.path.isdir(atm_dir): 
+    #    os.mkdir(atm_dir)
+    #    print('Generate GPS-atm directory: %s' % atm_dir)
     
-    date_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_dir + '/Global_GPS_Trop*')]
+    date_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_raw_dir + '/Global_GPS_Trop*')]
    
     date_list = read_hdf5(ts_file,datasetName='date')[0]
     date_list = date_list.astype('U13')
@@ -169,19 +184,19 @@ def main(argv):
         if not date_list[i] in date_list_exist:
             date_list_download.append(date_list[i])
             
-    print('---------------------------------------')
+    #print('---------------------------------------')
     print('Total number of gps data: ' + str(len(date_list)))
     print('Exist number of gps data: ' + str(len(date_list)-len(date_list_download)))
     print('Number of date to download: ' + str(len(date_list_download)))
     
     if len(date_list_download) > 0:
-        print('Start to download gps data...')
+        #print('Start to download gps data...')
         txt_download = 'datelist_download.txt'
         generate_datelist_txt(date_list_download,txt_download)
-        call_str = 'download_sar_atm.py ' + txt_download
+        call_str = 'download_gps_atm.py ' + txt_download + ' --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
     
-    extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_dir + '/SAR_GPS_Trop_*')]
+    extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
     date_list_extract = []
     for i in range(len(date_list)):
         if not date_list[i] in extract_list_exist:
@@ -196,7 +211,7 @@ def main(argv):
         print('Start to extract gps data...')
         txt_extract = 'datelist_extract.txt'
         generate_datelist_txt(date_list_extract,txt_extract)
-        call_str = 'extract_sar_atm.py search_gps.txt ' + meta['CENTER_LINE_UTC'] + ' --date_txt ' + txt_extract
+        call_str = 'extract_sar_atm.py gps_station_info.txt ' + meta['CENTER_LINE_UTC'] + ' --date-txt ' + txt_extract + ' --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
         
     print('')
@@ -237,7 +252,7 @@ def main(argv):
     
     date_generate = []
     for i in range(len(date_list)):
-        out0 = date_list[i] + '_' + inps.type + '.h5'
+        out0 = atm_sar_dir + '/' + date_list[i] + '_' + inps.type + '.h5'
         if not os.path.isfile(out0):
             date_generate.append(date_list[i])
     print('Total number of data set: %s' % str(len(date_list)))          
@@ -256,7 +271,7 @@ def main(argv):
     print('Start to generate time-series of tropospheric data ...' )
     txt_list = 'date_list.txt'
     generate_datelist_txt(date_list,txt_list)
-    call_str = 'generate_timeseries_tropo.py ' + txt_list +' ' + inps.ts_file + ' --type ' + inps.type
+    call_str = 'generate_timeseries_tropo.py --date-txt ' + txt_list + ' --type ' + inps.type
     os.system(call_str)
     
     print('Done.')
