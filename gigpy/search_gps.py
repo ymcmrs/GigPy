@@ -216,7 +216,12 @@ def cmdLineParse():
 
 def main(argv):
     
-    inps = cmdLineParse() 
+    inps = cmdLineParse()
+    #root_path = os.getcwd()
+    #gig_path = root_path + '/gigpy'
+    #if not os.path.isdir(gig_path):
+    #    os.mkdir(gig_path)
+
     if inps.file:
         atr = get_h5py_atr(inps.file)
         LAT,LON = get_corner_atr(atr)
@@ -257,14 +262,11 @@ def main(argv):
         LON = [float(LON1),float(LON2),float(LON3),float(LON4)]
         VP = [[LAT[0],LON[0]],[LAT[1],LON[1]],[LAT[3],LON[3]],[LAT[2],LON[2]],[LAT[0],LON[0]]];
     
-    PSXY = 'gps_latlon'
-    PSTEXT = 'gps_latlon_name'
+    #PSXY = 'gps_latlon'
+    #PSTEXT = 'gps_latlon_name'
     
-    OUT= 'search_gps.txt'
-    if inps.inside:
-        OUT = 'search_gps_inside.txt'
-    if inps.out:
-        OUT = inps.out
+    if inps.out: OUT = inps.out
+    else: OUT = 'gps_station_info.txt'
     
     call_str = 'wget -q http://geodesy.unr.edu/NGLStationPages/DataHoldings.txt'
     os.system(call_str)
@@ -320,10 +322,6 @@ def main(argv):
         MaxLat = MaxLat + dx
         MinLon = MinLon - dx
         MaxLon = MaxLon + dx
-        OUT = 'search_gps_extend.txt'
-    if inps.out:
-        OUT = inps.out
-   
     
     if ((MinLon < 0) and (MaxLon < 0 ) ):
         MinLon = MinLon + 360
@@ -406,11 +404,11 @@ def main(argv):
     if os.path.isfile(OUT):
         os.remove(OUT)
         
-    if os.path.isfile(PSXY):
-        os.remove(PSXY)
+    #if os.path.isfile(PSXY):
+    #    os.remove(PSXY)
     
-    if os.path.isfile(PSTEXT):
-        os.remove(PSTEXT)
+    #if os.path.isfile(PSTEXT):
+    #    os.remove(PSTEXT)
     
     for i in range(x):
         Nm = P_Name[kk[i]]
@@ -432,11 +430,11 @@ def main(argv):
         if float(LON) > 180:
             LON = str(float(LON)-360)
             
-        call_str = 'echo ' + str(LON) + ' ' + str(LAT)  + ' >> ' + PSXY
-        os.system(call_str)
+        #call_str = 'echo ' + str(LON) + ' ' + str(LAT)  + ' >> ' + PSXY
+        #os.system(call_str)
         
-        call_str = 'echo '  + str(LON) +' ' + str(LAT) + ' ' + str(Nm)  + ' >> ' + PSTEXT
-        os.system(call_str)
+        #call_str = 'echo '  + str(LON) +' ' + str(LAT) + ' ' + str(Nm)  + ' >> ' + PSTEXT
+        #os.system(call_str)
         print('     ' + str(Nm) + '           ' + str(LAT0) + '       ' + str(LON0) +'       ' + str(HEI) + '       ' + str(DB) + '     ' + str(DE) + ' ' +str(int(flag0)))
         
                
