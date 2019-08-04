@@ -117,11 +117,11 @@ INTRODUCTION = '''
 EXAMPLE = """example:
   
   tropo_gigpy.py timeseries.h5 geometryRadar.h5
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type pwv 
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type aps --parallel 4
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --type pwv --parallel 8
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type wzd 
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type tzd --parallel 4
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --type zwd --parallel 8
   tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --variogram-model spherical
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --interp-method kriging --type pwv
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --interp-method kriging --type zwd
   tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model onn_linear --interp-method kriging 
   
 ###################################################################################
