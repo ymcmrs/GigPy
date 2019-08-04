@@ -382,7 +382,7 @@ def main(argv):
     elif inps.type =='wzd': OUT = gig_atm_sar_wzd_dir + '/' + OUT
 
     dem = read_hdf5(geom_file,datasetName='height')[0]
-    inc = read_hdf5(geom_file,datasetName='incidenceAngle')[0]
+    #inc = read_hdf5(geom_file,datasetName='incidenceAngle')[0]
     
     dataNames = get_dataNames(geom_file)
     if 'latitude' in dataNames:
