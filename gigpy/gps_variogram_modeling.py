@@ -19,14 +19,31 @@ import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import h5py
-
 import random
+
 import pykrige
 from pykrige import OrdinaryKriging
 from pykrige import variogram_models
+from scipy.optimize import leastsq
+from scipy.stats.stats import pearsonr
 
-import matlab.engine
+#import matlab.engine
 #######################################################
+residual_variogram_dict = {'linear': variogram_models.linear_variogram_model_residual,
+                      'power': variogram_models.power_variogram_model_residual,
+                      'gaussian': variogram_models.gaussian_variogram_model_residual,
+                      'spherical': variogram_models.spherical_variogram_model_residual,
+                      'exponential': variogram_models.exponential_variogram_model_residual,
+                      'hole-effect': variogram_models.hole_effect_variogram_model_residual}
+
+
+variogram_dict = {'linear': variogram_models.linear_variogram_model,
+                      'power': variogram_models.power_variogram_model,
+                      'gaussian': variogram_models.gaussian_variogram_model,
+                      'spherical': variogram_models.spherical_variogram_model,
+                      'exponential': variogram_models.exponential_variogram_model,
+                      'hole-effect': variogram_models.hole_effect_variogram_model}
+
 
 def read_hdf5(fname, datasetName=None, box=None):
     # read hdf5
@@ -134,7 +151,7 @@ def main(argv):
     else:
         OUT = 'gps_aps_variogramModel.h5'
     
-    eng = matlab.engine.start_matlab()
+    #eng = matlab.engine.start_matlab()
     
     row,col = variance_tzd.shape
     model_parameters = np.zeros((row,4),dtype='float32')   # sill, range, nugget, Rs
@@ -147,25 +164,42 @@ def main(argv):
         SS0 = S0[lag < max_lag]
         sill0 = max(SS0)
         sill0 = sill0.tolist()
-       
+        
+        p0 = [sill0, range0, 0.0001]   
+        resi_func = residual_variogram_dict[inps.model]
+        vari_func = variogram_dict[inps.model]
+        
+        tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
+        corr, _ = pearsonr(SS0, vari_func(tt,LL0))
         LLm = matlab.double(LL0.tolist())
         SSm = matlab.double(SS0.tolist())
+        model_parameters[i,0:3] = tt
+        model_parameters[i,3] = corr   
+    
+        #LLm = matlab.double(LL0.tolist())
+        #SSm = matlab.double(SS0.tolist())
        
-        tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
-        model_parameters[i,:] = np.asarray(tt)
+        #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
+        #model_parameters[i,:] = np.asarray(tt)
         #print(model_parameters[i,3])
         
         S0 = variance_wzd[i,:]
         SS0 = S0[lag < max_lag]
         sill0 = max(SS0)
-        sill0 = sill0.tolist()
-       
+        #sill0 = sill0.tolist()
+        
+        p0 = [sill0, range0, 0.0001]   
+        resi_func = residual_variogram_dict[inps.model]
+        vari_func = variogram_dict[inps.model]
+        
+        tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
+        corr, _ = pearsonr(SS0, vari_func(tt,LL0))
         LLm = matlab.double(LL0.tolist())
         SSm = matlab.double(SS0.tolist())
-       
-        tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
-        model_parameters_wzd[i,:] = np.asarray(tt)
-        #print(model_parameters_wzd[i,3])
+        model_parameters_wzd[i,0:3] = tt
+        model_parameters_wzd[i,3] = corr
+        #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
+        #model_parameters_wzd[i,:] = np.asarray(tt)
         
     meta['variogram_model'] = inps.model
     #meta['elevation_model'] = meta['elevation_model']    
@@ -179,7 +213,7 @@ def main(argv):
     
     datasetDict['tzd_variogram_parameter'] = model_parameters  
     datasetDict['wzd_variogram_parameter'] = model_parameters_wzd  
-    eng.quit()
+    #eng.quit()
     write_gps_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None) 
     
     sys.exit(1)
