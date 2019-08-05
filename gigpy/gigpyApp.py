@@ -78,7 +78,6 @@ def cmdLineParse():
 
     parser.add_argument('cfg_file',help='name of the input configure file')
     parser.add_argument('-g',  dest='generate_cfg' ,help='generate an example of configure file.')
-    parser.add_argument('--dir', dest='directory', help='directory of processing. [default: corrent directory]')
 
     inps = parser.parse_args()
 
@@ -90,6 +89,8 @@ INTRODUCTION = '''
    Copy Right(c): 2019, Yunmeng Cao   @GigPy v1.0
    
    GigPy: GPS-based Imaging Geodesy software in Python.
+   
+   Start from download raw data to generate high-resolution maps of tropospheric measurements.
 '''
 
 EXAMPLE = """example:
@@ -109,7 +110,13 @@ def main(argv):
     
     if 'process_dir' in templateContents: root_dir = templateContents['process_dir']
     else: root_dir = os.getcwd()
-        
+    
+    data_source = 'UNAVCO'
+    print('')
+    print('---------------- Basic Parameters ---------------------')
+    print('Working directory: %s' % root_dir)
+    print('Data source : %s' % data_source)
+    
         
     gig_dir = root_dir + '/gigpy'
     atm_dir = root_dir + '/gigpy/atm'
@@ -121,6 +128,8 @@ def main(argv):
     # Get the interested data type
     if 'interested_type' in templateContents: interested_type = templateContents['interested_type']
     else: interested_type = 'delay'
+    print('Interested data type: %s' % interested_type)
+    
     
     if interested_type == 'delay': 
         inps_type = 'tzd'
@@ -152,6 +161,28 @@ def main(argv):
         research_time_file = templateContents['research_time_file']
         meta = read_attr(research_time_file)
         research_time = meta['CENTER_LINE_UTC']
+    print('Research UTC-time (s): %s' % str(research_time))
+    print('')
+    
+    # Get date_list
+    date_list = []
+    if 'date_list' in templateContents: 
+        date_list0 = templateContents['date_list']
+        date_list1 = date_list0.split(',')[:]
+        for d0 in date_list1: 
+            date_list.append(d0)
+    
+    if 'date_list_txt' in templateContents: 
+        date_list_txt = templateContents['date_list_txt']
+        date_list2 = np.loadtxt(date_list_txt,dtype=np.str)
+        date_list2 = date_list2.tolist()
+        for d0 in date_list2: 
+            date_list.append(d0)
+    
+    print('Interested date list:')
+    print('')
+    for k0 in date_list:
+        print(k0)
     
     # ------------ Get model parameters
     if 'elevation_model' in templateContents: elevation_model = templateContents['elevation_model']
@@ -168,8 +199,7 @@ def main(argv):
         
     if 'max_length' in templateContents: max_length = templateContents['max_length']
     else: max_length  = 150 
-        
-        
+          
     # ------------ Get interpolate parameters    
     if 'interp_method'  in templateContents: interp_method = templateContents['interp_method']
     else: interp_method  = 'kriging'  
@@ -180,10 +210,13 @@ def main(argv):
     if 'interp_parallel' in templateContents: interp_parallel = templateContents['interp_parallel']     
     else: interp_parallel = 1
     
+    print('')
+    print('*************   Step 1: search data   *************')
+    print('')
+    print('Start to search available GPS stations  ...')
     # Check research area and research area file
     if not os.path.isfile('gps_station_info.txt'):
-        print('----------------------------------------------------------------')
-        print('Start to search available GPS tations over the research area...')
+        #print('Start to search available GPS tations over the research area...')
         if 'research_area_file' in templateContents: 
             research_area_file = templateContents['research_area_file'] 
             print('Determining the research area based on the provided file %s' % research_area_file)
@@ -195,8 +228,7 @@ def main(argv):
             call_str = 'search_gps.py -b ' + research_area
             os.system(call_str)      
     else:
-        print('')
-        print('------------------------------------------------------')
+        #print('')
         print('gps_station_info.txt exist, skip search gps stations.')
         print('')
      
@@ -224,22 +256,6 @@ def main(argv):
         geometry_file = 'geometry.h5'
     
     print('')
-
-    # Get date_list
-    date_list = []
-    if 'date_list' in templateContents: 
-        date_list0 = templateContents['date_list']
-        date_list1 = date_list0.split(',')[:]
-        for d0 in date_list1: 
-            date_list.append(d0)
-    
-    if 'date_list_txt' in templateContents: 
-        date_list_txt = templateContents['date_list_txt']
-        date_list2 = np.loadtxt(date_list_txt,dtype=np.str)
-        date_list2 = date_list2.tolist()
-        for d0 in date_list2: 
-            date_list.append(d0)
-    print(date_list)
     
     date_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_raw_dir + '/Global_GPS_Trop*')]
      
@@ -252,7 +268,9 @@ def main(argv):
         if not date_list[i] in date_list_exist:
             date_list_download.append(date_list[i])
             
-    #print('---------------------------------------')
+    print('')
+    print('*************  Step 2: download data     *************')
+    print('')
     print('Total number of gps data: ' + str(len(date_list)))
     print('Exist number of downloaded gps data: ' + str(len(date_list)-len(date_list_download)))
     print('Number of data to be downloaded: ' + str(len(date_list_download)))
@@ -270,7 +288,9 @@ def main(argv):
         if not date_list[i] in extract_list_exist:
             date_list_extract.append(date_list[i])
     
-    print('---------------------------------------')
+    print('')
+    print('*************   Step 3: extract data      *************')
+    print('')
     print('Exist number of extracted gps data: ' + str(len(date_list)-len(date_list_extract)))
     print('Number of gps data to extract: ' + str(len(date_list_extract)))
     
@@ -282,24 +302,31 @@ def main(argv):
         call_str = 'extract_sar_atm.py gps_station_info.txt ' + str(research_time) + ' --date-txt ' + txt_extract + ' --parallel ' + str(extract_parallel)
         os.system(call_str)
         
+    print('')    
+    print('********  Step 4: analyze different components   ********')
     print('')
-    print('---------------------------------------')
-    print('Start to analyze the elevation-dependent components of the tropospheric products...')
+    #print('Start to analyze the elevation-dependent components of the tropospheric products...')
+    print('Seperate elevation-correlated components, atmosphere ramp, and tropospheric turbulence ..')
     print('Used elevation model: %s' % elevation_model)
+    print('Used ramp model: linear') # the only option
     print('')
     call_str = 'elevation_correlation.py gps_aps.h5 -m ' + elevation_model  
     os.system(call_str)
     
     print('')
-    print('---------------------------------------')
-    print('Start to calculate the variogram of the turbulent tropospheric products...')
+    print('******* Step 5: calculate variogram samples *******')
+    print('')
+    print('Number of the removed outliers: %s' % str(remove_numb))
+    print('Number of the used bins: %s' % str(bin_numb))
+    #print('Start to calculate the variogram of the turbulent tropospheric products...')
     #print('Used variogram model: %s' % inps.variogram_model)
     call_str = 'variogram_gps.py gps_aps_HgtCor.h5 --remove_numb ' + str(remove_numb) + ' --bin_numb ' + str(bin_numb)
     os.system(call_str)
     
     print('')
-    print('---------------------------------------')
-    print('Start to estimate the variogram model of the turbulent tropospheric products...')
+    print('******* Step 6: estimate variogram models ********')
+    print('')
+    #print('Start to estimate the variogram model of the turbulent tropospheric products...')
     print('Used variogram model: %s' % variogram_model)
     print('Max length used for model estimation: %s km' % max_length)
     print('')
@@ -311,8 +338,9 @@ def main(argv):
     else:  
         Stype = 'Atmospheric water vapor'
     print('')
-    print('---------------------------------------')
-    print('Start to generate high-resolution tropospheric maps ...' )
+    print('******* Step 7: generate high-resolution maps ******')
+    print('')
+    #print('Start to generate high-resolution tropospheric maps ...' )
     print('Type of the tropospheric products: %s' % Stype)
     print('Method used for interpolation: %s' % interp_method)
     print('Number of processors used for interpolation: %s' % str(interp_parallel))
@@ -335,14 +363,15 @@ def main(argv):
         
         
     print('')
-    print('---------------------------------------')
-    print('Start to generate time-series of tropospheric data ...' )
+    print('**** Step 8: generate time-series of tropospheric maps ****')
+    #print('')
+    #print('Start to generate time-series of tropospheric data ...' )
     txt_list = 'date_list.txt'
     generate_datelist_txt(date_list,txt_list)
     call_str = 'generate_timeseries_tropo.py --date-txt ' + txt_list + ' --type ' + inps_type
     os.system(call_str)
     
-    print('Done.')
+    #print('Done.')
     
     #if inps.type =='tzd':
     #    print('')
@@ -356,12 +385,6 @@ def main(argv):
     #    call_str = 'diff_gigpy.py ' + inps.ts_file + ' ' + ' timeseries_gps_aps_los.h5 --add  -o timeseries_gpsCor.h5'
     #    os.system(call_str)
     #    print('Done.')
-
-    sys.exit(1)
-    
-    
-    
-    
 
     sys.exit(1)
 
