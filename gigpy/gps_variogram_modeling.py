@@ -29,12 +29,12 @@ from scipy.stats.stats import pearsonr
 
 #import matlab.engine
 #######################################################
-residual_variogram_dict = {'linear': variogram_models.linear_variogram_model_residual,
-                      'power': variogram_models.power_variogram_model_residual,
-                      'gaussian': variogram_models.gaussian_variogram_model_residual,
-                      'spherical': variogram_models.spherical_variogram_model_residual,
-                      'exponential': variogram_models.exponential_variogram_model_residual,
-                      'hole-effect': variogram_models.hole_effect_variogram_model_residual}
+#residual_variogram_dict = {'linear': variogram_models.linear_variogram_model_residual,
+#                      'power': variogram_models.power_variogram_model_residual,
+#                      'gaussian': variogram_models.gaussian_variogram_model_residual,
+#                      'spherical': variogram_models.spherical_variogram_model_residual,
+#                      'exponential': variogram_models.exponential_variogram_model_residual,
+#                      'hole-effect': variogram_models.hole_effect_variogram_model_residual}
 
 
 variogram_dict = {'linear': variogram_models.linear_variogram_model,
