@@ -156,6 +156,11 @@ def main(argv):
     row,col = variance_tzd.shape
     model_parameters = np.zeros((row,4),dtype='float32')   # sill, range, nugget, Rs
     model_parameters_wzd = np.zeros((row,4),dtype='float32')   # sill, range, nugget, Rs
+    
+    def resi_func(m,d,y):
+        variogram_function =variogram_dict[inps.model] 
+        return  y - variogram_function(m,d)
+    
     for i in range(row):
         lag = Lags[i,:]
         LL0 = lag[lag < max_lag]
@@ -166,13 +171,13 @@ def main(argv):
         sill0 = sill0.tolist()
         
         p0 = [sill0, range0, 0.0001]   
-        resi_func = residual_variogram_dict[inps.model]
+        #resi_func = residual_variogram_dict[inps.model]
         vari_func = variogram_dict[inps.model]
         
         tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
         corr, _ = pearsonr(SS0, vari_func(tt,LL0))
-        LLm = matlab.double(LL0.tolist())
-        SSm = matlab.double(SS0.tolist())
+        #LLm = matlab.double(LL0.tolist())
+        #SSm = matlab.double(SS0.tolist())
         model_parameters[i,0:3] = tt
         model_parameters[i,3] = corr   
     
@@ -189,15 +194,16 @@ def main(argv):
         #sill0 = sill0.tolist()
         
         p0 = [sill0, range0, 0.0001]   
-        resi_func = residual_variogram_dict[inps.model]
+        #resi_func = residual_variogram_dict[inps.model]
         vari_func = variogram_dict[inps.model]
         
         tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
         corr, _ = pearsonr(SS0, vari_func(tt,LL0))
-        LLm = matlab.double(LL0.tolist())
-        SSm = matlab.double(SS0.tolist())
+        #LLm = matlab.double(LL0.tolist())
+        #SSm = matlab.double(SS0.tolist())
         model_parameters_wzd[i,0:3] = tt
         model_parameters_wzd[i,3] = corr
+        #print(model_parameters_wzd[i,:])
         #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
         #model_parameters_wzd[i,:] = np.asarray(tt)
         
