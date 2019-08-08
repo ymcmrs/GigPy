@@ -167,6 +167,7 @@ def main(argv):
     print('Research region: %s(west)  %s(south)  %s(east)  %s(north)' % (west,south,east,north))
     print('>>> Ready to download SRTM1 dem over research region.')
     call_str='wget -q -O dem.tif "http://ot-data1.sdsc.edu:9090/otr/getdem?north=%f&south=%f&east=%f&west=%f&demtype=SRTMGL1"' % (north,south,east,west)
+    print(call_str)
     os.system(call_str)
     print('>>> DEM download finished.')
         
@@ -206,6 +207,7 @@ def main(argv):
     
     dem_data = io.imread(DEM)
     dem_data = np.asarray(dem_data, dtype = np.float32)
+    dem_data[(dem_data < -10000) | (dem_data > 10000)] =0
     dem_rescaled = rescale(dem_data, k0_rescale,multichannel=False, anti_aliasing=False)
     #dem_rescaled = cv2.resize(dem_data,None,fx=k0_rescale, fy=k0_rescale, interpolation = cv2.INTER_LINEAR)
     #dem_rescaled = scipy.ndimage.zoom(dem_data, k0_rescale, order=1)
