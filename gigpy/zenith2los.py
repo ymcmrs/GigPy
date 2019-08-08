@@ -106,14 +106,14 @@ def main(argv):
         ff = np.cos(INC)
         S0 = 'los'
     
-    print(meta['FILE_TYPE'])
+    #print(meta['FILE_TYPE'])
     if meta['FILE_TYPE'] == 'timeseries':
         data_type = 'timeseries'
         data0 = read_hdf5(data_file, datasetName = 'timeseries')[0]
         data = data0
             
         for i in range(data0.shape[0]):
-            data[i, :, :] = data0[i, :, :] * ff
+            data[i, :, :] = data0[i, :, :] / ff
             
         for datasetName in datasetNames:
             datasetDict[datasetName] = read_hdf5(data_file, datasetName = datasetName)[0]
