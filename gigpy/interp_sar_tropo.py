@@ -418,7 +418,9 @@ def main(argv):
     trend_para0 = trend_para[k0,:]
     elevation_para0 = elevation_para[k0,:]
     
-    lons0 = lons + 360 # change to gps longitude format
+    mean_lons = np.mean(lons.flatten())
+    if mean_lons < 0:
+        lons0 = lons + 360 # change to gps longitude format [0, 360]
     lats0 = lats
     Trend0 = function_trend(lats0,lons0,trend_para0)
     Trend0 = Trend0.reshape(LENGTH,WIDTH)
