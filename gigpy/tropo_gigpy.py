@@ -228,7 +228,7 @@ def main(argv):
     print('---------------------------------------')
     print('Start to calculate the variogram of the turbulent tropospheric products...')
     #print('Used variogram model: %s' % inps.variogram_model)
-    call_str = 'variogram_gps.py gps_delay_HgtCor.h5 --remove_numb ' + str(inps.removeNumb) + ' --bin_numb ' + str(inps.binNumb)
+    call_str = 'gps_variogram.py gps_delay_HgtCor.h5 --remove_numb ' + str(inps.removeNumb) + ' --bin_numb ' + str(inps.binNumb)
     os.system(call_str)
     
     print('')
