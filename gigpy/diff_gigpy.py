@@ -84,10 +84,10 @@ INTRODUCTION = '''
 
 EXAMPLE = """Example:
   
-  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data aps_sar -o difference_20190101_20190120_aps.h5
-  diff_gigpy.py timeseries_gps_aps.h5 timeseries_gps_turb.h5
+  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data aps_sar 
+  diff_gigpy.py timeseries_gps_aps.h5 timeseries_gps_turb.h5 -o difference_0101_0120_aps.h5
   diff_gigpy.py timeseries_gps_aps.h5 timeseries_gps_turb.h5 --absolute
-  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data turb_sar -o difference_20190101_20190120_aps.h5 
+  diff_gigpy.py 20190101_aps.h5 20190120_aps.h5 --data turb_sar 
   diff_gigpy.py timeseries.h5 timeseries_gps_aps.h5 -o timeseries_gpsCor.h5 --add
   
 ###################################################################################

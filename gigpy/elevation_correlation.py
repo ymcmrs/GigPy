@@ -7,7 +7,6 @@
 ###  Univ. : King Abdullah University of Science & Technology ###   
 #################################################################
 
-
 import numpy as np
 import getopt
 import sys
@@ -20,7 +19,9 @@ from scipy.optimize import curve_fit
 from scipy.optimize import leastsq
 from scipy.stats.stats import pearsonr
 
+from gigpy import _utils as ut
 from gigpy import elevation_models
+
 #### define dicts for model/residual/initial values ###############
 
 model_dict = {'linear': elevation_models.linear_elevation_model,
@@ -46,6 +47,40 @@ para_numb_dict = {'linear': 2,
                   'onn_linear':4,
                   'exp':2,
                   'exp_linear':3}
+
+def unit_length(STR):
+    STR0 = STR
+    if len(STR)==5:
+        STR0 = STR + '0'
+    elif len(STR)==4:
+        STR0 = STR + '00'
+    elif len(STR)==3:
+        STR0 = STR + '000'
+    
+    return STR0
+
+def unit_length5(STR):
+    STR0 = STR
+    
+    if len(STR) > 5:
+        STR0 = STR[0:5]
+    elif len(STR)==4:
+        STR0 = STR + '0'
+    elif len(STR)==3:
+        STR0 = STR + '00'
+    elif len(STR)==2:
+        STR0 = STR + '000'
+    
+    return STR0
+    
+    
+def read_hdf5(fname, datasetName=None, box=None):
+    # read hdf5
+    with h5py.File(fname, 'r') as f:
+        data = f[datasetName][:]
+        atr = dict(f.attrs)
+        
+    return data, atr
 
 
 def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
@@ -103,45 +138,6 @@ def remove_ramp(lat,lon,data):
     data_trend = data - func_trend(lat,lon,para)
     corr, _ = pearsonr(data, func_trend(lat,lon,para))
     return data_trend, para, corr
-    
-def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compression=None):
-    #output = 'variogramStack.h5'
-    'lags                  1 x N '
-    'semivariance          M x N '
-    'sills                 M x 1 '
-    'ranges                M x 1 '
-    'nuggets               M x 1 '
-    
-    if os.path.isfile(out_file):
-        print('delete exsited file: {}'.format(out_file))
-        os.remove(out_file)
-
-    print('create HDF5 file: {} with w mode'.format(out_file))
-    dt = h5py.special_dtype(vlen=np.dtype('float64'))
-
-    
-    with h5py.File(out_file, 'w') as f:
-        for dsName in datasetDict.keys():
-            data = datasetDict[dsName]
-            ds = f.create_dataset(dsName,
-                              data=data,
-                              compression=compression)
-        
-        for key, value in metadata.items():
-            f.attrs[key] = str(value)
-            #print(key + ': ' +  value)
-    print('finished writing to {}'.format(out_file))
-        
-    return out_file  
-
-def read_hdf5(fname, datasetName=None, box=None):
-    # read hdf5
-    with h5py.File(fname, 'r') as f:
-        data = f[datasetName][:]
-        atr = dict(f.attrs)
-        
-    return data, atr
-
 
 def adjust_pwv(gps_pwv_h5,epoch = 0):
     
@@ -178,7 +174,7 @@ def adjust_pwv(gps_pwv_h5,epoch = 0):
             
     return station, hei, zwd, tzd, pwv
 
-def adjust_aps(gps_aps_h5,epoch = 0):
+def adjust_aps_unavco(gps_aps_h5,epoch = 0):
     
     FILE = gps_aps_h5
     
@@ -211,6 +207,35 @@ def adjust_aps(gps_aps_h5,epoch = 0):
             
     return hei, wzd, tzd
             
+def adjust_aps_unr(gps_aps_h5,epoch = 0):
+    
+    FILE = gps_aps_h5
+    
+    gps_hei = read_hdf5(FILE,datasetName='gps_height')[0]
+    gps_nm = read_hdf5(FILE,datasetName='gps_name')[0]
+    gps_nm = list(gps_nm)
+
+    date = read_hdf5(FILE,datasetName='date')[0]
+    station = read_hdf5(FILE,datasetName='station')[0]
+    tzd = read_hdf5(FILE,datasetName='tzd')[0]
+    
+    station= list(station[epoch])
+    tzd= list(tzd[epoch])
+    
+    k0 =9999
+    for i in range(len(station)):
+        if station[i].decode("utf-8")=='0.0':
+            if i < k0:
+                k0 =i
+    station = station[0:k0]    
+    tzd = tzd[0:k0]
+    NN = len(station)
+    
+    hei = np.zeros((NN,))
+    for i in range(NN):
+         hei[i] = gps_hei[gps_nm.index(station[i])]
+            
+    return hei, tzd
     
 def cmdLineParse():
     parser = argparse.ArgumentParser(description='Download GPS data over SAR coverage.',\
@@ -236,10 +261,10 @@ INTRODUCTION = '''
 
 
 EXAMPLE = '''EXAMPLES:
-    elevation_correlation.py gps_aps.h5 -m onn
-    elevation_correlation.py gps_pwv.h5 -m onn_linear 
-    elevation_correlation.py gps_pwv.h5 -m exp -o gps_pwv_HgtCor.h5
-    elevation_correlation.py gps_aps.h5 -m onn -o gps_aps_HgtCor.h5
+    elevation_correlation.py gps_delay.h5 -m onn
+    elevation_correlation.py gps_delay.h5 -m onn_linear 
+    elevation_correlation.py gps_delay.h5 -m exp -o gps_pwv_HgtCor.h5
+    elevation_correlation.py gps_delay.h5 -m onn -o gps_aps_HgtCor.h5
 ################################################################################################
 '''
 
@@ -250,17 +275,11 @@ def main(argv):
     gps_h5 = inps.gps_file
     FILE = gps_h5
     
-    if 'pwv' in gps_h5:
-        OUT = 'gps_pwv_HgtCor.h5'
-    elif 'aps' in gps_h5:
-        OUT = 'gps_aps_HgtCor.h5'
-    else:
-        OUT = 'gps_trop_HgtCor.h5'
-    
     if inps.out: OUT = inps.out
+    else: OUT = 'gps_delay_HgtCor.h5'
         
     model = inps.model
-    date_list, meta =  read_hdf5(FILE,datasetName='date')
+    date_list, meta =  ut.read_hdf5(FILE,datasetName='date')
     tzd =  read_hdf5(FILE,datasetName='tzd')[0]
     
     wzd_model_parameters = np.zeros((len(date_list),para_numb_dict[model]),dtype = np.float32)
@@ -279,54 +298,68 @@ def main(argv):
     elevation_function = model_dict[model]
     residual_function = residual_dict[model]
     
+    datasetNames = ut.get_dataNames(FILE)
+    
+    print('')
+    print('Start to model the topo-corr components and the ramp components ...')
+    print('Elevation model: %s' % inps.model)
+    print('')
+    print('    date      topo./corr   ramp/corr    stations')
     for i in range(len(date_list)):
-        hei, wzd, tzd = adjust_aps(FILE,epoch = i)
+        if 'wzd' in datasetNames:
+            hei, wzd, tzd = adjust_aps_unavco(FILE,epoch = i)
+        else:
+            hei, tzd = adjust_aps_unr(FILE,epoch = i)
+            
         hei,lat,lon = adjust_aps_lat_lon(FILE,epoch = i)
-        p0 = initial_function(hei,wzd)
-        plsq = leastsq(residual_function,p0,args = (hei,wzd))
-        wzd_model_parameters[i,:] = plsq[0]
-        wzd_turb_trend[i,0:len(wzd)] = wzd - elevation_function(plsq[0],hei)
-        corr_wzd, _ = pearsonr(wzd, elevation_function(plsq[0],hei))
         
-        wzd_turb0,para0,corr_trend0 = remove_ramp(lat,lon,wzd_turb_trend[i,0:len(wzd)])
-        wzd_turb[i,0:len(wzd)] = wzd_turb0
-        wzd_trend_parameters[i,:] = para0
+        if 'wzd' in datasetNames:
+            p0 = initial_function(hei,wzd)
+            plsq = leastsq(residual_function,p0,args = (hei,wzd))
+            wzd_model_parameters[i,:] = plsq[0]
+            wzd_turb_trend[i,0:len(wzd)] = wzd - elevation_function(plsq[0],hei)
+            corr_wzd, _ = pearsonr(wzd, elevation_function(plsq[0],hei))
+        
+            wzd_turb0,para0,corr_trend0 = remove_ramp(lat,lon,wzd_turb_trend[i,0:len(wzd)])
+            wzd_turb[i,0:len(wzd)] = wzd_turb0
+            wzd_trend_parameters[i,:] = para0
         
         p0 = initial_function(hei,tzd)
         plsq = leastsq(residual_function,p0,args = (hei,tzd))
         tzd_model_parameters[i,:] = plsq[0]
-        tzd_turb_trend[i,0:len(wzd)] = tzd - elevation_function(plsq[0],hei)
+        tzd_turb_trend[i,0:len(tzd)] = tzd - elevation_function(plsq[0],hei)
         corr_tzd, _ = pearsonr(tzd, elevation_function(plsq[0],hei))
-        
-        tzd_turb0,para0,corr0 = remove_ramp(lat,lon,tzd_turb_trend[i,0:len(wzd)])
-        tzd_turb[i,0:len(wzd)] = tzd_turb0
+        #print(corr_tzd)
+        tzd_turb0,para0,corr0 = remove_ramp(lat,lon,tzd_turb_trend[i,0:len(tzd)])
+        #print(corr0)
+        tzd_turb[i,0:len(tzd)] = tzd_turb0
         tzd_trend_parameters[i,:] = para0
         
-        print(str(date_list[i].decode("utf-8")) + ' : ' + str(round(corr_wzd*1000)/1000) + ' ' + str(round(corr_tzd*10000)/10000) + ' ' + str(round(corr_trend0*1000)/1000) + ' ' + str(round(corr0*1000)/1000))
-        
+        #print(str(date_list[i].decode("utf-8")) + ' : ' + str(round(corr_wzd*1000)/1000) + ' ' + str(round(corr_tzd*10000)/10000) + ' ' + str(round(corr_trend0*1000)/1000) + ' ' + str(round(corr0*1000)/1000))
+        print('  '+str(date_list[i].decode("utf-8"))  +  '      ' + unit_length(str(round(corr_tzd*10000)/10000)) + '       '  + unit_length5(str(round(corr0*1000)/1000)) + '        ' + str(len(tzd_turb0)))
 
-    datasetNames =['date','gps_name','gps_lat','gps_lon','gps_height','hzd','wzd','tzd','station']
+    #datasetNames =['date','gps_name','gps_lat','gps_lon','gps_height','hzd','wzd','tzd','station']
     datasetDict = dict()
     
   
     for dataName in datasetNames:
         datasetDict[dataName] = read_hdf5(FILE,datasetName=dataName)[0]
     
-    datasetDict['tzd_turb_trend'] = tzd_turb_trend
-    datasetDict['wzd_turb_trend'] = wzd_turb_trend    
-        
-    datasetDict['tzd_turb'] = tzd_turb
-    datasetDict['wzd_turb'] = wzd_turb
-    
+    datasetDict['tzd_turb_trend'] = tzd_turb_trend        
+    datasetDict['tzd_turb'] = tzd_turb    
     datasetDict['tzd_elevation_parameter'] = tzd_model_parameters
-    datasetDict['wzd_elevation_parameter'] = wzd_model_parameters
-    
     datasetDict['tzd_trend_parameter'] = tzd_trend_parameters
-    datasetDict['wzd_trend_parameter'] = wzd_trend_parameters
+
     
+    if 'wzd' in datasetNames:
+        datasetDict['wzd_turb_trend'] = wzd_turb_trend  
+        datasetDict['wzd_turb'] = wzd_turb
+        datasetDict['wzd_elevation_parameter'] = wzd_model_parameters
+        datasetDict['wzd_trend_parameter'] = wzd_trend_parameters
+        
     meta['elevation_model'] = model
     
-    write_gps_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None)
+    ut.write_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None)
             
 if __name__ == '__main__':
     main(sys.argv[1:])

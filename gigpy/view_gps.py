@@ -28,6 +28,35 @@ font = {'family': 'serif',
         'size': 12,
         }
 
+def remove_outlier_variogram(semivariance, lag):
+    
+    semi0 = semivariance.copy()
+    lag0 = lag.copy()
+    N = len(semi0)
+    
+    remove = []
+    for i in range(N-3):
+        k0 = semivariance[i]
+        c0 = semivariance[(i+1):(i+4)]
+        #print(c0)
+        c00 = np.mean(c0)
+        
+        if k0 > c00:
+            remove.append(i)
+        
+    #print(len(remove))
+    #print(remove)
+    
+    semi00 = []
+    lag00 = []
+    for i in range(N):
+        if i not in remove:
+            semi00.append(semi0[i])
+            lag00.append(lag0[i])
+
+    
+    return semi00, lag00
+    
 def read_hdf5(fname, datasetName=None, box=None):
     # read hdf5
     with h5py.File(fname, 'r') as f:
@@ -137,17 +166,22 @@ def main(argv):
         k0 =100**2
     
     semivariance = read_hdf5(FILE, datasetName='Semivariance')[0]
+    #print(semivariance[0,:]*k0)
     semivariance_trend = read_hdf5(FILE, datasetName='Semivariance_trend')[0]
     Lag = read_hdf5(FILE, datasetName='Lags')[0]
     y0 = semivariance[Num,:]*k0
     y0_trend = semivariance_trend[Num,:]*k0
     x0 = Lag[Num,:]
     
+    semi0, lag0 = remove_outlier_variogram(y0, x0)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     #ax.plot(x0, y0, 'ro',label='WNVCE-based variances',fillstyle='none')
+    #print(x0)
+    #print(y0)
     ax.plot(x0, y0, 'ro')
     ax.plot(x0, y0_trend, 'bo')
+    #ax.plot(lag0, semi0, 'ko')
     ax.yaxis.grid()
         
     label = datelist[Num]    

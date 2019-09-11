@@ -93,11 +93,11 @@ INTRODUCTION = '''
    Start from download raw data to generate high-resolution maps of tropospheric measurements.
 '''
 
-EXAMPLE = """example:
+EXAMPLE = """  example:
 
-                 gigpyApp.py -h
-                 gigpyApp.py -g
-                 gigpyApp.py LosAngels.cfg
+                 gigpyApp.py LosAngeles_gigpy.cfg
+                 gigpyApp.py Hawaii_gigpy.cfg
+                 gigpyApp.py gigpy_project.cfg
   
 ###################################################################################
 """
@@ -125,6 +125,10 @@ def main(argv):
     atm_sar_tzd_dir = root_dir + '/gigpy/atm/sar_tzd'
     atm_sar_wzd_dir = root_dir + '/gigpy/atm/sar_wzd'
     
+    # Get the source of the gps products [option: unavco, unr]
+    if 'data_source' in templateContents: data_source  = templateContents['data_source']
+    else: data_source = 'unr'
+       
     # Get the interested data type
     if 'interested_type' in templateContents: interested_type = templateContents['interested_type']
     else: interested_type = 'delay'
@@ -237,7 +241,10 @@ def main(argv):
     if 'resolution' in templateContents: resolution = templateContents['resolution']     
     else: resolution = 60
     
-    if 'research_area_file' in templateContents: 
+    geometry_file = 'geometry.h5'
+    if os.path.isfile('geometry.h5'):
+        print('The existed geometry.h5 file is used as the geometry file.')  
+    elif 'research_area_file' in templateContents: 
         geometry0_file = templateContents['research_area_file']
         dataNames = get_dataNames(geometry0_file)
         if ('height' in dataNames) and ('latitude' in dataNames): 
@@ -247,8 +254,9 @@ def main(argv):
             print('Using generate_geometry.py to generate the geometry file...')
             call_str = 'generate_geometry.py --ref ' + geometry0_file + ' --resolution ' + str(resolution) 
             os.system(call_str)
-            geometry_file = 'geometry.h5'
+            geometry_file = 'geometry.h5'      
     else:
+        research_area = templateContents['research_area'] 
         print('Geometry file is not found.')
         print('Using generate_geometry.py to generate the geometry file...')
         call_str = 'generate_geometry.py --region ' + research_area + ' --resolution ' + str(resolution) 
@@ -279,7 +287,7 @@ def main(argv):
         #print('Start to download gps data...')
         txt_download = 'datelist_download.txt'
         generate_datelist_txt(date_list_download,txt_download)
-        call_str = 'download_gps_atm.py ' + txt_download + ' --parallel ' + str(download_parallel)
+        call_str = 'download_gps_atm.py --date-list-txt ' + txt_download + ' --station-txt gps_station_info.txt ' + ' --source ' + data_source + ' --parallel ' + str(download_parallel)
         os.system(call_str)
     
     extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
@@ -299,7 +307,7 @@ def main(argv):
         print('Start to extract gps data...')
         txt_extract = 'datelist_extract.txt'
         generate_datelist_txt(date_list_extract,txt_extract)
-        call_str = 'extract_sar_atm.py gps_station_info.txt ' + str(research_time) + ' --date-txt ' + txt_extract + ' --parallel ' + str(extract_parallel)
+        call_str = 'extract_sar_atm.py gps_station_info.txt ' + str(research_time) + ' --source ' + data_source + ' --date-txt ' + txt_extract + ' --parallel ' + str(extract_parallel)
         os.system(call_str)
         
     print('')    
@@ -310,7 +318,7 @@ def main(argv):
     print('Used elevation model: %s' % elevation_model)
     print('Used ramp model: linear') # the only option
     print('')
-    call_str = 'elevation_correlation.py gps_aps.h5 -m ' + elevation_model  
+    call_str = 'elevation_correlation.py gps_delay.h5 -m ' + elevation_model  
     os.system(call_str)
     
     print('')
@@ -320,7 +328,7 @@ def main(argv):
     print('Number of the used bins: %s' % str(bin_numb))
     #print('Start to calculate the variogram of the turbulent tropospheric products...')
     #print('Used variogram model: %s' % inps.variogram_model)
-    call_str = 'variogram_gps.py gps_aps_HgtCor.h5 --remove_numb ' + str(remove_numb) + ' --bin_numb ' + str(bin_numb)
+    call_str = 'gps_variogram.py gps_delay_HgtCor.h5 --remove_numb ' + str(remove_numb) + ' --bin_numb ' + str(bin_numb)
     os.system(call_str)
     
     print('')
@@ -330,7 +338,7 @@ def main(argv):
     print('Used variogram model: %s' % variogram_model)
     print('Max length used for model estimation: %s km' % max_length)
     print('')
-    call_str = 'gps_variogram_modeling.py gps_aps_variogram.h5  --max-length ' + str(max_length) + ' --model ' + variogram_model
+    call_str = 'gps_variogram_modeling.py gps_delay_variogram.h5  --max-length ' + str(max_length) + ' --model ' + variogram_model
     os.system(call_str)
     
     if inps_type =='tzd': 
@@ -358,7 +366,7 @@ def main(argv):
     if len(date_generate) > 0 :
         txt_generate = 'datelist_generate.txt'
         generate_datelist_txt(date_generate,txt_generate)
-        call_str = 'interp_sar_tropo_list.py ' + txt_generate + ' gps_aps_variogramModel.h5 ' + geometry_file + ' --type ' + inps_type + ' --method ' + interp_method + '  --kriging-points-numb ' + str(kriging_points_numb) + ' --parallel ' + str(interp_parallel)
+        call_str = 'interp_sar_tropo_list.py ' + txt_generate + ' gps_delay_variogramModel.h5 ' + geometry_file + ' --type ' + inps_type + ' --method ' + interp_method + '  --kriging-points-numb ' + str(kriging_points_numb) + ' --parallel ' + str(interp_parallel)
         os.system(call_str)
         
         

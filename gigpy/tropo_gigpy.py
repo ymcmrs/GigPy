@@ -79,6 +79,7 @@ def cmdLineParse():
 
     parser.add_argument('ts_file',help='input InSAR time-series file name (e.g., timeseries.h5).')
     parser.add_argument('geo_file',help='input geometry file name (e.g., geometryRadar.h5).')
+    parser.add_argument('-s','--source', dest='source', choices = {'unavco','unr'}, default = 'unr',help = 'source of the GPS data.[default: unavco]')
     parser.add_argument('--elevation-model', dest='elevation_model', 
                         choices = {'linear','onn','onn_linear','exp','exp_linear'},default = 'onn_linear',
                        help = 'model used to estimate the elevation-correlated components. [default: onn_linear]')
@@ -116,8 +117,8 @@ INTRODUCTION = '''
 
 EXAMPLE = """example:
   
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5
-  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type wzd 
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --source unr
+  tropo_gigpy.py timeseries.h5 geometryRadar.h5 --source unavco --type wzd 
   tropo_gigpy.py timeseries.h5 geometryRadar.h5 --type tzd --parallel 4
   tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --type zwd --parallel 8
   tropo_gigpy.py timeseries.h5 geometryRadar.h5 --elevation-model linear --variogram-model spherical
@@ -193,7 +194,7 @@ def main(argv):
         #print('Start to download gps data...')
         txt_download = 'datelist_download.txt'
         generate_datelist_txt(date_list_download,txt_download)
-        call_str = 'download_gps_atm.py ' + txt_download + ' --parallel ' + str(inps.parallelNumb)
+        call_str = 'download_gps_atm.py --date-list-txt ' + txt_download + ' --source ' + inps.source +  ' --station-txt gps_station_info.txt --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
     
     extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
@@ -211,7 +212,8 @@ def main(argv):
         print('Start to extract gps data...')
         txt_extract = 'datelist_extract.txt'
         generate_datelist_txt(date_list_extract,txt_extract)
-        call_str = 'extract_sar_atm.py gps_station_info.txt ' + meta['CENTER_LINE_UTC'] + ' --date-txt ' + txt_extract + ' --parallel ' + str(inps.parallelNumb)
+        call_str = 'extract_sar_atm.py gps_station_info.txt ' + meta['CENTER_LINE_UTC'] +  ' --source ' + inps.source + ' --date-txt ' + txt_extract + ' --parallel ' + str(inps.parallelNumb)
+        print(call_str)
         os.system(call_str)
         
     print('')
@@ -219,14 +221,14 @@ def main(argv):
     print('Start to analyze the elevation-dependent components of the tropospheric products...')
     print('Used elevation model: %s' % inps.elevation_model)
     print('')
-    call_str = 'elevation_correlation.py gps_aps.h5 -m ' + inps.elevation_model  
+    call_str = 'elevation_correlation.py gps_delay.h5 -m ' + inps.elevation_model  
     os.system(call_str)
     
     print('')
     print('---------------------------------------')
     print('Start to calculate the variogram of the turbulent tropospheric products...')
     #print('Used variogram model: %s' % inps.variogram_model)
-    call_str = 'variogram_gps.py gps_aps_HgtCor.h5 --remove_numb ' + str(inps.removeNumb) + ' --bin_numb ' + str(inps.binNumb)
+    call_str = 'variogram_gps.py gps_delay_HgtCor.h5 --remove_numb ' + str(inps.removeNumb) + ' --bin_numb ' + str(inps.binNumb)
     os.system(call_str)
     
     print('')
@@ -235,7 +237,7 @@ def main(argv):
     print('Used variogram model: %s' % inps.variogram_model)
     print('Max length used for model estimation: %s km' % inps.maxLength)
     print('')
-    call_str = 'gps_variogram_modeling.py gps_aps_variogram.h5  --max-length ' + str(inps.maxLength) + ' --model ' + inps.variogram_model
+    call_str = 'gps_variogram_modeling.py gps_delay_variogram.h5  --max-length ' + str(inps.maxLength) + ' --model ' + inps.variogram_model
     os.system(call_str)
     
     if inps.type =='tzd': 
@@ -262,7 +264,7 @@ def main(argv):
     if len(date_generate) > 0 :
         txt_generate = 'datelist_generate.txt'
         generate_datelist_txt(date_generate,txt_generate)
-        call_str = 'interp_sar_tropo_list.py ' + txt_generate + ' gps_aps_variogramModel.h5 ' + inps.geo_file + ' --type ' + inps.type + ' --method ' + inps.interp_method + '  --kriging-points-numb ' + str(inps.kriging_points_numb) + ' --parallel ' + str(inps.parallelNumb)
+        call_str = 'interp_sar_tropo_list.py ' + txt_generate + ' gps_delay_variogramModel.h5 ' + inps.geo_file + ' --type ' + inps.type + ' --method ' + inps.interp_method + '  --kriging-points-numb ' + str(inps.kriging_points_numb) + ' --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
         
         
@@ -285,7 +287,7 @@ def main(argv):
         print('Done.')
         print('')
         print('Start to correct InSAR time-series tropospheric delays ...' )
-        call_str = 'diff_gigpy.py ' + inps.ts_file + ' ' + ' timeseries_gps_aps_los.h5 --add  -o timeseries_gpsCor.h5'
+        call_str = 'diff_gigpy.py ' + inps.ts_file + ' ' + ' timeseries_gps_tzd_los.h5 --add  -o timeseries_gpsCor.h5'
         os.system(call_str)
         print('Done.')
 

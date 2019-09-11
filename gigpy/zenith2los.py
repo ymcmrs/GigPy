@@ -81,8 +81,8 @@ INTRODUCTION = '''
 
 EXAMPLE = """Example:
   
-  zenith2los.py 20190101_aps.h5 geometryRadar.h5 --data aps_sar -o 20190120_aps_los.h5
-  zenith2los.py timeseries_gps_aps.h5 geometryRadar.h5 -o  timeseries_gps_aps_los.h5
+  zenith2los.py 20190101_aps.h5 incidenceAngle.h5 --data aps_sar -o 20190120_aps_los.h5
+  zenith2los.py timeseries_gps_aps.h5 incidenceAngle.h5 -o  timeseries_gps_aps_los.h5
   zenith2los.py timeseries.h5 geometryRadar.h5 --inverse -o  timeseries_zenith.h5
   
 ###################################################################################

@@ -27,6 +27,7 @@ from pykrige import variogram_models
 from scipy.optimize import leastsq
 from scipy.stats.stats import pearsonr
 
+from gigpy import _utils as ut
 #import matlab.engine
 #######################################################
 #residual_variogram_dict = {'linear': variogram_models.linear_variogram_model_residual,
@@ -44,6 +45,38 @@ variogram_dict = {'linear': variogram_models.linear_variogram_model,
                       'exponential': variogram_models.exponential_variogram_model,
                       'hole-effect': variogram_models.hole_effect_variogram_model}
 
+def unit_length(STR0,length=5):
+    STR = STR0
+    if len(STR0) > 5:
+        STR = STR0[0:5]
+    elif len(STR0) ==1:
+        STR = STR0 + '.000'
+    elif len(STR0) ==2:
+        STR = STR0 + '.00'  
+    elif len(STR0) ==3:
+        STR = STR0 + '00' 
+    elif len(STR0) ==4:
+        STR = STR0 + '0'
+    
+    return STR
+
+
+def unit_length0(STR0):
+    if float(STR0)==0:
+        STR = STR0 + '0'
+    else:
+        STR = unit_length4(STR0)
+    
+    return STR
+
+def unit_length4(STR0):
+    STR = STR0
+    if len(STR0) > 4:
+        STR = STR0[0:4]
+    elif len(STR0) ==3:
+        STR = STR0 + '0'
+    
+    return STR
 
 def read_hdf5(fname, datasetName=None, box=None):
     # read hdf5
@@ -52,6 +85,33 @@ def read_hdf5(fname, datasetName=None, box=None):
         atr = dict(f.attrs)
         
     return data, atr
+
+def remove_outlier_variogram(semivariance, lag):
+
+    semi0 = np.asarray(semivariance,dtype = np.float32)
+    lag0 = np.asarray(lag,dtype = np.float32)
+    N = len(semi0)
+    
+    remove = []
+    for i in range(N-3):
+        k0 = semi0[i]
+        c0 = semi0[(i+1):(i+4)]
+        #print(c0)
+        c00 = np.mean(c0)
+
+        if k0 > c00:
+            remove.append(i)
+    
+    semi00 = []
+    lag00 = []
+    for i in range(N):
+        if i not in remove:
+            semi00.append(semi0[i])
+            lag00.append(lag0[i])
+
+    semi00 = np.asarray(semi00,dtype=np.float32)
+    lag00 = np.asarray(lag00,dtype=np.float32)
+    return semi00, lag00
 
 def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compression=None):
     #output = 'variogramStack.h5'
@@ -129,14 +189,19 @@ def main(argv):
     
     date,meta = read_hdf5(FILE, datasetName='date')
     variance_tzd = read_hdf5(FILE, datasetName='Semivariance')[0]
-    variance_wzd = read_hdf5(FILE, datasetName='Semivariance_wzd')[0]
- 
+        
+    semivariance = read_hdf5(FILE, datasetName='Semivariance')[0]
+    
     Lags = read_hdf5(FILE, datasetName='Lags')[0]
     
+    datasetNames = ut.get_dataNames(FILE)
+    if 'Semivariance_wzd' in datasetNames:
+        variance_wzd = read_hdf5(FILE, datasetName='Semivariance_wzd')[0]
+        
     if inps.max_length:
         max_lag = inps.max_length
     else:
-        max_lag = max(lag) + 0.001
+        max_lag = max(Lags[0,:]) + 0.001
     meta['max_length'] = max_lag
     r0 = np.asarray(1/2*max_lag)
     range0 = r0.tolist()
@@ -144,13 +209,9 @@ def main(argv):
     datasetDict = dict()
     datasetDict['Lags'] = Lags
     
-    if inps.out_file:
-        OUT = os.path.out_file
-    elif 'pwv' in os.path.basename(FILE):
-        OUT = 'gps_pwv_variogramModel.h5'
-    else:
-        OUT = 'gps_aps_variogramModel.h5'
-    
+    if inps.out_file: OUT = os.path.out_file
+    else: OUT = 'gps_delay_variogramModel.h5'
+
     #eng = matlab.engine.start_matlab()
     
     row,col = variance_tzd.shape
@@ -161,12 +222,24 @@ def main(argv):
         variogram_function =variogram_dict[inps.model] 
         return  y - variogram_function(m,d)
     
+    print('')
+    print('Variogram model: %s' % inps.model)
+    print('Maximum length: %s km' % inps.max_length)
+    
+    print('')
+    print('  Date     Sill(cm^2)     Range(km)     Nugget(cm^2)      Corr')
     for i in range(row):
-        lag = Lags[i,:]
-        LL0 = lag[lag < max_lag]
         
+        lag = Lags[i,:]
+        #print(Lags.shape)
+        LL0 = lag[(lag >0) & (lag < max_lag)]
+        #print(variance_tzd.shape)
         S0 = variance_tzd[i,:]
-        SS0 = S0[lag < max_lag]
+        SS0 = S0[(lag >0) & (lag < max_lag)]
+        
+        #print(LL0)
+        #print(SS0)
+        
         sill0 = max(SS0)
         sill0 = sill0.tolist()
         
@@ -174,53 +247,59 @@ def main(argv):
         #resi_func = residual_variogram_dict[inps.model]
         vari_func = variogram_dict[inps.model]
         
-        tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
-        corr, _ = pearsonr(SS0, vari_func(tt,LL0))
+        SS01 = SS0.copy()
+        LL01 = LL0.copy()
+        #SS01, LL01 = remove_outlier_variogram(SS0, LL0)
+        #print(LL01)
+        #print(SS01)
+        tt, _ = leastsq(resi_func,p0,args = (LL01,SS01))   
+        corr, _ = pearsonr(SS01, vari_func(tt,LL01))
+        if tt[2] < 0:
+            tt[2] =0
         #LLm = matlab.double(LL0.tolist())
         #SSm = matlab.double(SS0.tolist())
         model_parameters[i,0:3] = tt
+        #print(tt)
         model_parameters[i,3] = corr   
-    
-        #LLm = matlab.double(LL0.tolist())
-        #SSm = matlab.double(SS0.tolist())
+        date0 = date[i].astype(str)
+
+        #LLm = matlab.double(LL01.tolist())
+        #SSm = matlab.double(SS01.tolist())
        
         #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
         #model_parameters[i,:] = np.asarray(tt)
-        #print(model_parameters[i,3])
+        #print(tt)
+        print(date0 + '     ' + unit_length4(str(round(tt[0]*10000*2*100)/100)) + '           ' + unit_length(str(round(tt[1]*100)/100)) + '           ' + unit_length0(str(round(tt[2]*10000*2*100)/100)) + '          ' + unit_length(str(round(corr*1000)/1000)))
         
-        S0 = variance_wzd[i,:]
-        SS0 = S0[lag < max_lag]
-        sill0 = max(SS0)
-        #sill0 = sill0.tolist()
+        if 'Semivariance_wzd' in datasetNames:
+            S0 = variance_wzd[i,:]
+            SS0 = S0[lag < max_lag]
+            sill0 = max(SS0)
+
+            p0 = [sill0, range0, 0.0001]   
+            vari_func = variogram_dict[inps.model]
         
-        p0 = [sill0, range0, 0.0001]   
-        #resi_func = residual_variogram_dict[inps.model]
-        vari_func = variogram_dict[inps.model]
-        
-        tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
-        corr, _ = pearsonr(SS0, vari_func(tt,LL0))
-        #LLm = matlab.double(LL0.tolist())
-        #SSm = matlab.double(SS0.tolist())
-        model_parameters_wzd[i,0:3] = tt
-        model_parameters_wzd[i,3] = corr
-        #print(model_parameters_wzd[i,:])
-        #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
-        #model_parameters_wzd[i,:] = np.asarray(tt)
+            tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
+            corr, _ = pearsonr(SS0, vari_func(tt,LL0))
+
+            model_parameters_wzd[i,0:3] = tt
+            model_parameters_wzd[i,3] = corr
+
         
     meta['variogram_model'] = inps.model
     #meta['elevation_model'] = meta['elevation_model']    
     #del meta['model']
     
-    datasetNames = ['date','gps_name','gps_lat','gps_lon','gps_height','hzd','wzd','tzd','wzd_turb_trend','tzd_turb_trend','wzd_turb','tzd_turb','station','tzd_elevation_parameter', 'wzd_elevation_parameter','tzd_trend_parameter', 'wzd_trend_parameter']
     
     datasetDict = dict()
     for dataName in datasetNames:
         datasetDict[dataName] = read_hdf5(FILE,datasetName=dataName)[0]
     
     datasetDict['tzd_variogram_parameter'] = model_parameters  
-    datasetDict['wzd_variogram_parameter'] = model_parameters_wzd  
+    if 'Semivariance_wzd' in datasetNames:
+        datasetDict['wzd_variogram_parameter'] = model_parameters_wzd  
     #eng.quit()
-    write_gps_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None) 
+    ut.write_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None) 
     
     sys.exit(1)
 

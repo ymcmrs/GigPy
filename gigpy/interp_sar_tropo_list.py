@@ -75,7 +75,7 @@ def main(argv):
         if not os.path.isfile(out0):
             #print('-------------------------------------------------------------')
             #print('Start to interpolate high-resolution map for date: %s' % date_list[i])
-            call_str = 'interp_sar_tropo.py ' + date_list[i] + ' gps_aps_variogramModel.h5 ' + inps.geo_file + ' --type ' + inps.type + ' --method ' + inps.method + '  --kriging-points-numb ' + str(inps.kriging_points_numb) + ' --parallel ' + str(inps.parallelNumb)
+            call_str = 'interp_sar_tropo.py ' + date_list[i] + ' gps_delay_variogramModel.h5 ' + inps.geo_file + ' --type ' + inps.type + ' --method ' + inps.method + '  --kriging-points-numb ' + str(inps.kriging_points_numb) + ' --parallel ' + str(inps.parallelNumb)
             os.system(call_str)
     
     sys.exit(1)

@@ -21,36 +21,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import h5py
 
+from gigpy import _utils as ut
 #######################################################
-def write_gps_h5(datasetDict, out_file, metadata=None, ref_file=None, compression=None):
-    #output = 'variogramStack.h5'
-    'lags                  1 x N '
-    'semivariance          M x N '
-    'sills                 M x 1 '
-    'ranges                M x 1 '
-    'nuggets               M x 1 '
-    
-    if os.path.isfile(out_file):
-        print('delete exsited file: {}'.format(out_file))
-        os.remove(out_file)
-
-    print('create HDF5 file: {} with w mode'.format(out_file))
-    dt = h5py.special_dtype(vlen=np.dtype('float64'))
-
-    
-    with h5py.File(out_file, 'w') as f:
-        for dsName in datasetDict.keys():
-            data = datasetDict[dsName]
-            ds = f.create_dataset(dsName,
-                              data=data,
-                              compression=compression)
-        
-        for key, value in metadata.items():
-            f.attrs[key] = str(value)
-            #print(key + ': ' +  value)
-    print('finished writing to {}'.format(out_file))
-        
-    return out_file  
 
 def read_hdf5(fname, datasetName=None, box=None):
     # read hdf5
@@ -60,7 +32,7 @@ def read_hdf5(fname, datasetName=None, box=None):
         
     return data, atr
 
-def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
+def adjust_aps_lat_lon_unavco(gps_aps_h5,epoch = 0):
     
     FILE = gps_aps_h5
     
@@ -93,7 +65,7 @@ def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
     station = station[0:k0]
     wzd = wzd[0:k0]     
     tzd = tzd[0:k0]
-    
+
     wzd_trend = wzd_trend[0:k0]     
     tzd_trend = tzd_trend[0:k0]
     
@@ -106,10 +78,53 @@ def adjust_aps_lat_lon(gps_aps_h5,epoch = 0):
         hei[i] = gps_hei[gps_nm.index(station[i])]
         lat[i] = gps_lat[gps_nm.index(station[i])]
         lon[i] = gps_lon[gps_nm.index(station[i])]
-    tzd_turb = tzd
-    wzd_turb = wzd
+    tzd_turb = tzd.copy()
+    wzd_turb = wzd.copy()
     
     return tzd_turb, wzd_turb, tzd_trend, wzd_trend, lat, lon
+
+def adjust_aps_lat_lon_unr(gps_aps_h5,epoch = 0):
+    
+    FILE = gps_aps_h5
+    
+    gps_hei = read_hdf5(FILE,datasetName='gps_height')[0]
+    gps_lat = read_hdf5(FILE,datasetName='gps_lat')[0]
+    gps_lon = read_hdf5(FILE,datasetName='gps_lon')[0]
+    gps_nm = read_hdf5(FILE,datasetName='gps_name')[0]
+    gps_nm = list(gps_nm)
+
+    date = read_hdf5(FILE,datasetName='date')[0]
+    station = read_hdf5(FILE,datasetName='station')[0]
+    tzd = read_hdf5(FILE,datasetName='tzd_turb')[0]
+    
+    tzd_trend = read_hdf5(FILE,datasetName='tzd_turb_trend')[0]
+    
+    station= list(station[epoch])
+    tzd= list(tzd[epoch])
+    
+    tzd_trend= list(tzd_trend[epoch])
+    
+    k0 =9999
+    for i in range(len(station)):
+        if station[i].decode("utf-8")=='0.0':
+            if i < k0:
+                k0 =i
+    station = station[0:k0]  
+    tzd = tzd[0:k0]    
+    tzd_trend = tzd_trend[0:k0]
+    
+    NN = len(station)
+    
+    hei = np.zeros((NN,))
+    lat = np.zeros((NN,))
+    lon = np.zeros((NN,))
+    for i in range(NN):
+        hei[i] = gps_hei[gps_nm.index(station[i])]
+        lat[i] = gps_lat[gps_nm.index(station[i])]
+        lon[i] = gps_lon[gps_nm.index(station[i])]
+    tzd_turb = tzd
+    
+    return tzd_turb, tzd_trend, lat, lon
 
 def remove_numb(x,y,z,numb=0):
     
@@ -124,7 +139,7 @@ def remove_numb(x,y,z,numb=0):
     y0 = y[fg]
     z0 = z[fg]
     
-    return x0, y0, z0
+    return x0, y0, z0, fg
 
 
 def latlon2dis(lat1,lon1,lat2,lon2,R=6371):
@@ -147,10 +162,10 @@ INTRODUCTION = '''
 
 EXAMPLE = '''
     Usage:
-            variogram_gps.py gps_aps_HgtCor.h5
-            variogram_gps.py gps_pwv_HgtCor.h5 --remove_numb 5 --bin_numb 60
-            variogram_gps.py gps_pwv_HgtCor.h5 --remove_numb 5             
-            variogram_gps.py gps_aps_HgtCor.h5 --bin_numb 60
+            gps_variogram.py gps_aps_HgtCor.h5
+            gps_variogram.py gps_pwv_HgtCor.h5 --remove_numb 5 --bin_numb 60
+            gps_variogram.py gps_pwv_HgtCor.h5 --remove_numb 5             
+            gps_variogram.py gps_aps_HgtCor.h5 --bin_numb 60
 
 ##############################################################################
 '''
@@ -182,21 +197,27 @@ def main(argv):
     gps_h5 = inps.gps_file
     FILE = gps_h5
     R = 6371     # Radius of the Earth (km)
-    if 'pwv' in gps_h5:
-        OUT = 'gps_pwv_variogram.h5'
-    elif 'aps' in gps_h5:
-        OUT = 'gps_aps_variogram.h5'
-    else:
-        OUT = 'gps_trop_variogram.h5'
+
     if inps.out: OUT = inps.out
+    else: OUT = 'gps_delay_variogram.h5'
+    
+    print('')
+    print('Start to estimate the variogram (i.e. variance) samples ...')
+    print('Output file name: %s' % OUT)
+    print('Remove outliers number: %s' % inps.remove_numb)
+    print('')
+    print('       Date     Stations')
+    
     BIN_NUMB = inps.bin_numb
     
+    datasetNames = ut.get_dataNames(FILE)
+    if 'wzd_turb' in datasetNames:
+        wzd_turb =  read_hdf5(FILE,datasetName='wzd_turb')[0]
+        wzd_turb_trend =  read_hdf5(FILE,datasetName='wzd_turb_trend')[0]
+        
     date_list, meta =  read_hdf5(FILE,datasetName='date')
-    tzd_turb =  read_hdf5(FILE,datasetName='tzd_turb')[0]
-    wzd_turb =  read_hdf5(FILE,datasetName='wzd_turb')[0]
-    
+    tzd_turb =  read_hdf5(FILE,datasetName='tzd_turb')[0]  
     tzd_turb_trend =  read_hdf5(FILE,datasetName='tzd_turb_trend')[0]
-    wzd_turb_trend =  read_hdf5(FILE,datasetName='wzd_turb_trend')[0]
     
     Lag = np.zeros((len(date_list),BIN_NUMB),dtype = np.float32)
     Variance = np.zeros((len(date_list),BIN_NUMB),dtype = np.float32)
@@ -206,39 +227,50 @@ def main(argv):
     Variance_wzd_trend = np.zeros((len(date_list),BIN_NUMB),dtype = np.float32)
     
     for i in range(len(date_list)):
-        tzd_turb, wzd_turb, tzd_turb_trend, wzd_turb_trend, lat, lon = adjust_aps_lat_lon(FILE,epoch = i)
+        #print(date_list[i])
+        if 'wzd_turb' in datasetNames:
+            tzd_turb, wzd_turb, tzd_turb_trend, wzd_turb_trend, lat, lon = adjust_aps_lat_lon_unavco(FILE,epoch = i)
+        else:
+            tzd_turb, tzd_turb_trend, lat, lon = adjust_aps_lat_lon_unr(FILE,epoch = i)
+            
         lat = np.asarray(lat,dtype = np.float32)
         lon = np.asarray(lon,dtype = np.float32)
 
-        lat0, lon0, tzd_turb0 = remove_numb(lat,lon,tzd_turb,numb=inps.remove_numb)
+        lat0, lon0, tzd_turb0, fg0 = remove_numb(lat,lon,tzd_turb,numb=inps.remove_numb)
+        #print(tzd_turb0*1000)
+        print('     ' + date_list[i].astype(str) + '     ' + str(len(lat0[0])))
         #uk = OrdinaryKriging(lon, lat, tzd_turb, coordinates_type = 'geographic', nlags=BIN_NUMB)
         uk = OrdinaryKriging(lon0, lat0, tzd_turb0, coordinates_type = 'geographic', nlags=BIN_NUMB)
         #print(len((uk.lags)))
         Lags = (uk.lags)/180*np.pi*R
         Semivariance = 2*(uk.semivariance)
-        
-        lat0, lon0, tzd_turb_trend0 = remove_numb(lat,lon,tzd_turb_trend,numb=inps.remove_numb)
+        #print(Semivariance)
+        y0 = np.asarray(tzd_turb_trend, dtype = np.float32)
+        tzd_turb_trend0 = y0[fg0]
+        #lat0, lon0, tzd_turb_trend0 = remove_numb(lat,lon,tzd_turb_trend,numb=inps.remove_numb)
         uk = OrdinaryKriging(lon0, lat0, tzd_turb_trend0, coordinates_type = 'geographic', nlags=BIN_NUMB)
         Semivariance_trend = 2*(uk.semivariance)
         
-        Lag[i,:] = Lags
-        Variance[i,:] = Semivariance
-        Variance_trend[i,:] = Semivariance_trend
+        Lag[i,0:len(Lags)] = Lags
+        Variance[i,0:len(Lags)] = Semivariance
+        Variance_trend[i,0:len(Lags)] = Semivariance_trend
         
+        if 'wzd_turb' in datasetNames:
+            lat0, lon0, wzd_turb0, fg0 = remove_numb(lat,lon,wzd_turb,numb=inps.remove_numb)
+            uk = OrdinaryKriging(lon0, lat0, wzd_turb0, coordinates_type = 'geographic', nlags=BIN_NUMB)
+            Semivariance_wzd = 2*(uk.semivariance)
         
-        lat0, lon0, wzd_turb0 = remove_numb(lat,lon,wzd_turb,numb=inps.remove_numb)
-        uk = OrdinaryKriging(lon0, lat0, wzd_turb0, coordinates_type = 'geographic', nlags=BIN_NUMB)
-        Semivariance_wzd = 2*(uk.semivariance)
+            #lat0, lon0, wzd_turb_trend0, fg0 = remove_numb(lat,lon,wzd_turb_trend,numb=inps.remove_numb)
+            y0 = np.asarray(wzd_turb_trend, dtype = np.float32)
+            wzd_turb_trend0 = y0[fg0]
+            uk = OrdinaryKriging(lon0, lat0, wzd_turb_trend0, coordinates_type = 'geographic', nlags=BIN_NUMB)
+            Semivariance_wzd_trend = 2*(uk.semivariance)
         
-        lat0, lon0, wzd_turb_trend0 = remove_numb(lat,lon,wzd_turb_trend,numb=inps.remove_numb)
-        uk = OrdinaryKriging(lon0, lat0, wzd_turb_trend0, coordinates_type = 'geographic', nlags=BIN_NUMB)
-        Semivariance_wzd_trend = 2*(uk.semivariance)
-        
-        Variance_wzd[i,:] = Semivariance
-        Variance_wzd_trend[i,:] = Semivariance_trend
+            Variance_wzd[i,:] = Semivariance
+            Variance_wzd_trend[i,:] = Semivariance_trend
 
         
-    datasetNames = ['date','gps_name','gps_lat','gps_lon','gps_height','hzd','wzd','tzd','wzd_turb_trend','tzd_turb_trend','wzd_turb','tzd_turb','station','tzd_elevation_parameter', 'wzd_elevation_parameter','tzd_trend_parameter', 'wzd_trend_parameter']
+    #datasetNames = ['date','gps_name','gps_lat','gps_lon','gps_height','hzd','wzd','tzd','wzd_turb_trend','tzd_turb_trend','wzd_turb','tzd_turb','station','tzd_elevation_parameter', 'wzd_elevation_parameter','tzd_trend_parameter', 'wzd_trend_parameter']
     
     datasetDict = dict()
     meta['remove_numb'] = inps.remove_numb
@@ -250,10 +282,11 @@ def main(argv):
     datasetDict['Semivariance'] = Variance
     datasetDict['Semivariance_trend'] = Variance_trend
     
-    datasetDict['Semivariance_wzd'] = Variance_wzd
-    datasetDict['Semivariance_wzd_trend'] = Variance_wzd_trend
+    if 'wzd_turb' in datasetNames:
+        datasetDict['Semivariance_wzd'] = Variance_wzd
+        datasetDict['Semivariance_wzd_trend'] = Variance_wzd_trend
     
-    write_gps_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None)    
+    ut.write_h5(datasetDict, OUT, metadata=meta, ref_file=None, compression=None)    
     
     
     sys.exit(1)

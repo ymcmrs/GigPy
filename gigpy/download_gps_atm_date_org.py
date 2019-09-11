@@ -111,16 +111,22 @@ def readdate(DATESTR):
         
 ###################################################################################################
 
-INTRODUCTION = '''
-Download GPS troposphere data based on date from UNAVCO or Nevada Geodetic Lab.
-
+INTRODUCTION = '''GPS:
+    GPS stations are searched from Nevada Geodetic Laboratory by using search_gps.py 
+    website:  http://geodesy.unr.edu/NGLStationPages/gpsnetmap/GPSNetMap.html
+   
+    GPS atmosphere data is download from UNAVOC, please check: download_gps_atm.py
+    website:  ftp://data-out.unavco.org/pub/products/troposphere
+    
+    GPS deformation data is download from Nevada Geodetic Laboratory                              
+    website:  http://geodesy.unr.edu/gps_timeseries/tenv3/IGS08
+    
 '''
 
 EXAMPLE = '''EXAMPLES:
-
-    download_gps_atm_date.py 20150101 --source unavco
-    download_gps_atm_date.py 20150101 --station-txt search_gps_info.txt --source unr
+    download_gps_atm_date.py 20150101 
     download_gps_atm_date.py 20150101 --station BGIS
+    download_gps_atm_date.py 20150101 --station_txt search_gps_inside.txt
 '''    
     
 
@@ -131,11 +137,6 @@ def cmdLineParse():
                                      epilog=INTRODUCTION+'\n'+EXAMPLE)
 
     parser.add_argument('date',help='GPS station name.')
-    parser.add_argument('-s','--source', dest='source', choices = {'unavco','unr'}, default = 'unavco',help = 'source of the GPS data.[default: unavco]')
-    parser.add_argument('--station', dest='station',nargs='*',help = 'names of the GPS stations to be downloaded.')
-    parser.add_argument('--station-txt', dest='station_txt',help = 'text file of the GPS stations.')
-
-    
     #parser.add_argument('--station', dest='station_name', help='GPS station name.')
     #parser.add_argument('--station_txt', dest='station_txt', help='GPS station txet file.')
     

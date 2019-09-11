@@ -78,10 +78,10 @@ INTRODUCTION = '''
 
 EXAMPLE = """Example:
   
-  generate_timeseries_tropo.py --date-txt date_list --data aps --atm-dir /Yunmeng/SCRATCH/LosAngles_gps_test/gigpy/atm
+  generate_timeseries_tropo.py --date-txt date_list --data trend -o timeseries_gps_trend.h5
   generate_timeseries_tropo.py --date-txt date_list --data turb --type wzd
   generate_timeseries_tropo.py --date-txt date_list --data hgt
-  generate_timeseries_tropo.py --date-txt date_list --data trend --type tzd -o timeseries_gps_trend.h5
+  generate_timeseries_tropo.py --date-txt date_list --data trend --type tzd 
   
 ###################################################################################
 """
