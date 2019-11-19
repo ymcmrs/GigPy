@@ -307,6 +307,7 @@ def main(argv):
     if inps.source =='unavco': 
         datasetDict['wzd'] = GPS_WD
         datasetDict['hzd'] = GPS_HD
+        datasetDict['tzd'] = GPS_TD
     datasetDict['tzd'] = GPS_TD
     datasetDict['date'] = np.asarray(date_list,dtype = np.string_)
     datasetDict['station'] = GPS_NM

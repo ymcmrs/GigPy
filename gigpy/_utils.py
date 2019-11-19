@@ -274,7 +274,8 @@ def extract_sar_delay_unavco(data0):
     tt_all = 'tt_all_' + str(DATE0)
     tt_name = 'tt_name_' + str(DATE0)
     
-    call_str = 'sed -n 5,' + str(count) + 'p ' +  Trop_GPS + ' >' + tt_all
+    #call_str = 'sed -n 5,' + str(count) + 'p ' +  Trop_GPS + ' >' + tt_all
+    call_str = "sed -e '/#/d' " + Trop_GPS + " >" + tt_all
     os.system(call_str)
     # extract all of the available station names
     call_str = "awk '{print $10}' " + tt_all + ' >' + tt_name

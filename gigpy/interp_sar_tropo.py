@@ -227,7 +227,7 @@ def split_lat_lon_kriging(nn, processors = 4):
 
 def OK_function(data0):
     OK,lat0,lon0,np = data0
-    z0,s0 = OK.execute('points', lon0, lat0,n_closest_points= np,backend='loop')
+    z0,s0 = OK.execute('points', lon0, lat0, n_closest_points= np, backend='loop')
     return z0,s0
 
 def dist_weight_interp(data0):
@@ -369,6 +369,13 @@ def main(argv):
     
     lats = grid_lat.flatten()
     lons = grid_lon.flatten()
+    
+    
+    where_are_NaNs = np.isnan(lats)
+    lats[where_are_NaNs] = 0
+
+    where_are_NaNs = np.isnan(lons)
+    lons[where_are_NaNs] = 0
     #print(grid_lat.shape)
     # TWD, ZWD, TURB_Kriging, Turb_ITD, Trend, HgtCor, 
     k0 = date_list.index(date)
@@ -390,12 +397,14 @@ def main(argv):
     
     mean_lons = np.mean(lons)
     lons0 = round((np.mean(lon0) - mean_lons)/360)*360 + lons # adjust to the same trend system
+    #lons0 = lons
     lats0 = lats
-    
+    #print(lats)
+    #print(lons)
     if np.mean(lon0) > 180:
         lon0 = lon0 - 360
-    
-
+    #print(lat0)
+    #print(lon0)
     variogram_para = read_hdf5(gps_file,datasetName = S0 + '_variogram_parameter')[0]
     trend_para = read_hdf5(gps_file,datasetName = S0 + '_trend_parameter')[0]
     elevation_para = read_hdf5(gps_file,datasetName = S0 + '_elevation_parameter')[0]
@@ -414,6 +423,7 @@ def main(argv):
     
     OK = OrdinaryKriging(lon0, lat0, turb0, variogram_model=meta0['variogram_model'], verbose=False,enable_plotting=False)
     para = variogram_para0[0:3]
+    #print(para)
     para[1] = para[1]/6371/np.pi*180
     #print(para)
     OK.variogram_model_parameters = para

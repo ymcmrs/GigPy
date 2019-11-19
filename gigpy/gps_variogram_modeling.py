@@ -254,6 +254,7 @@ def main(argv):
         #print(SS01)
         tt, _ = leastsq(resi_func,p0,args = (LL01,SS01))   
         corr, _ = pearsonr(SS01, vari_func(tt,LL01))
+
         if tt[2] < 0:
             tt[2] =0
         #LLm = matlab.double(LL0.tolist())
@@ -269,9 +270,9 @@ def main(argv):
         #tt = eng.variogramfit(LLm,SSm,range0,sill0,[],'nugget',0.00001,'model',inps.model)
         #model_parameters[i,:] = np.asarray(tt)
         #print(tt)
-        print(date0 + '     ' + unit_length4(str(round(tt[0]*10000*2*100)/100)) + '           ' + unit_length(str(round(tt[1]*100)/100)) + '           ' + unit_length0(str(round(tt[2]*10000*2*100)/100)) + '          ' + unit_length(str(round(corr*1000)/1000)))
+        #print(date0 + '     ' + unit_length4(str(round(tt[0]*10000*2*100)/100)) + '           ' + unit_length(str(round(tt[1]*100)/100)) + '           ' + unit_length0(str(round(tt[2]*10000*2*100)/100)) + '          ' + unit_length(str(round(corr*1000)/1000)))
         
-        if 'Semivariance_wzd' in datasetNames:
+        if 'Semivariance_wzd' in datasetNames:    
             S0 = variance_wzd[i,:]
             SS0 = S0[lag < max_lag]
             sill0 = max(SS0)
@@ -282,9 +283,12 @@ def main(argv):
             tt, _ = leastsq(resi_func,p0,args = (LL0,SS0))   
             corr, _ = pearsonr(SS0, vari_func(tt,LL0))
 
+            if tt[2] < 0:
+                tt[2] =0
             model_parameters_wzd[i,0:3] = tt
             model_parameters_wzd[i,3] = corr
 
+            #print(date0 + '     ' + unit_length4(str(round(tt[0]*10000*2*100)/100)) + '           ' + unit_length(str(round(tt[1]*100)/100)) + '           ' + unit_length0(str(round(tt[2]*10000*2*100)/100)) + '          ' + unit_length(str(round(corr*1000)/1000)))
         
     meta['variogram_model'] = inps.model
     #meta['elevation_model'] = meta['elevation_model']    
