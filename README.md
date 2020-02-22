@@ -1,4 +1,4 @@
-# GigPy
+# GigPy [Improved from PyGPS]
 [![Language](https://img.shields.io/badge/python-3.5%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-GPL-yellow.svg)](https://github.com/ymcmrs/GigPy/blob/master/LICENSE)
 
