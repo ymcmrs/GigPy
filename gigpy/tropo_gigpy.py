@@ -197,6 +197,8 @@ def main(argv):
         call_str = 'download_gps_atm.py --date-list-txt ' + txt_download + ' --source ' + inps.source +  ' --station-txt gps_station_info.txt --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
     
+    date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/Global_GPS_Trop*')]
+    print(date_list)
     extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
     date_list_extract = []
     for i in range(len(date_list)):
@@ -287,7 +289,7 @@ def main(argv):
         print('Done.')
         print('')
         print('Start to correct InSAR time-series tropospheric delays ...' )
-        call_str = 'diff_gigpy.py ' + inps.ts_file + ' ' + ' timeseries_gps_tzd_los.h5 --add  -o timeseries_gpsCor.h5'
+        call_str = 'diff_pyrite.py ' + inps.ts_file + ' ' + ' timeseries_gps_tzd_los.h5 --add  -o timeseries_gpsCor.h5'
         os.system(call_str)
         print('Done.')
 
