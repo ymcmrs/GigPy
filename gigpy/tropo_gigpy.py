@@ -197,8 +197,16 @@ def main(argv):
         call_str = 'download_gps_atm.py --date-list-txt ' + txt_download + ' --source ' + inps.source +  ' --station-txt gps_station_info.txt --parallel ' + str(inps.parallelNumb)
         os.system(call_str)
     
-    date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/Global_GPS_Trop*')]
-    print(date_list)
+    
+    date_list_all = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_raw_dir + '/Global_GPS_Trop*')]
+    date_list2 = []
+    for k0 in date_list:
+        if k0 in date_list_all:
+            date_list2.append(k0)
+    date_list = date_list2
+    
+    #date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/Global_GPS_Trop*')]
+    #print(date_list)
     extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
     date_list_extract = []
     for i in range(len(date_list)):

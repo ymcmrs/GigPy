@@ -170,12 +170,12 @@ def main(argv):
             if len(stationDownloadList) > 0:  
                 ut.parallel_process(data_para, download_unr_para, n_jobs=inps.parallelNumb, use_kwargs=False)
                 
-            #    FILE0 = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + date_list[i]
-            #    open(FILE0,'a').close()
-            #else:
-            #    FILE0 = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + date_list[i]
-            #    open(FILE0,'a').close()
-            #    print('Done.')
+                FILE0 = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + date_list[i]
+                open(FILE0,'a').close()
+            else:
+                FILE0 = gig_atm_raw_dir + '/' + 'Global_GPS_Trop_' + date_list[i]
+                open(FILE0,'a').close()
+                print('Done.')
                 
     
 if __name__ == '__main__':
