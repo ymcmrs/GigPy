@@ -201,23 +201,24 @@ def main(argv):
     date_list_all = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_raw_dir + '/Global_GPS_Trop*')]
     date_list2 = []
     for k0 in date_list:
+        print(k0)
         if k0 in date_list_all:
             date_list2.append(k0)
-    date_list = date_list2
-    
+            
+    print(date_list2)
     #date_list = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/Global_GPS_Trop*')]
     #print(date_list)
     extract_list_exist = [os.path.basename(x).split('_')[3] for x in glob.glob(atm_sar_raw_dir + '/SAR_GPS_Trop_*')]
     date_list_extract = []
-    for i in range(len(date_list)):
-        if not date_list[i] in extract_list_exist:
-            date_list_extract.append(date_list[i])
+    for i in range(len(date_list2)):
+        if not date_list2[i] in extract_list_exist:
+            date_list_extract.append(date_list2[i])
     
     print('---------------------------------------')
-    print('Exist number of extracted gps data: ' + str(len(date_list)-len(date_list_extract)))
+    print('Exist number of extracted gps data: ' + str(len(date_list2)-len(date_list_extract)))
     print('Number of gps data to extract: ' + str(len(date_list_extract)))
     
-    
+    print(len(date_list_extract))
     if len(date_list_extract) > 0:
         print('Start to extract gps data...')
         txt_extract = 'datelist_extract.txt'
@@ -263,12 +264,12 @@ def main(argv):
     print('')
     
     date_generate = []
-    for i in range(len(date_list)):
-        out0 = atm_sar_dir + '/' + date_list[i] + '_' + inps.type + '.h5'
+    for i in range(len(date_list2)):
+        out0 = atm_sar_dir + '/' + date_list2[i] + '_' + inps.type + '.h5'
         if not os.path.isfile(out0):
-            date_generate.append(date_list[i])
-    print('Total number of data set: %s' % str(len(date_list)))          
-    print('Exsit number of data set: %s' % str(len(date_list)-len(date_generate))) 
+            date_generate.append(date_list2[i])
+    print('Total number of data set: %s' % str(len(date_list2)))          
+    print('Exsit number of data set: %s' % str(len(date_list2)-len(date_generate))) 
     print('Number of high-resolution maps need to be interpolated: %s' % str(len(date_generate)))  
     
     if len(date_generate) > 0 :
@@ -281,8 +282,9 @@ def main(argv):
     print('')
     print('---------------------------------------')
     print('Start to generate time-series of tropospheric data ...' )
-    txt_list = 'date_list.txt'
-    generate_datelist_txt(date_list,txt_list)
+    txt_list = 'tzd_list.txt'
+    tzd_list = [os.path.basename(x).split('_')[0] for x in glob.glob(atm_sar_dir + '/*_tzd.h5']
+    generate_datelist_txt(tzd_list,txt_list)
     call_str = 'generate_timeseries_tropo.py --date-txt ' + txt_list + ' --type ' + inps.type
     os.system(call_str)
     
