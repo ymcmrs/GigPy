@@ -283,7 +283,7 @@ def main(argv):
     print('---------------------------------------')
     print('Start to generate time-series of tropospheric data ...' )
     txt_list = 'tzd_list.txt'
-    tzd_list = [os.path.basename(x).split('_')[0] for x in glob.glob(atm_sar_dir + '/*_tzd.h5']
+    tzd_list = [os.path.basename(x).split('_')[0] for x in glob.glob(atm_sar_dir + '/*_tzd.h5')]
     generate_datelist_txt(tzd_list,txt_list)
     call_str = 'generate_timeseries_tropo.py --date-txt ' + txt_list + ' --type ' + inps.type
     os.system(call_str)
