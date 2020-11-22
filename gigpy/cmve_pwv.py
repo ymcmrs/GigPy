@@ -4,7 +4,7 @@
 ###  Copy Right (c): 2019, Yunmeng Cao                        ###  
 ###  Author: Yunmeng Cao                                      ###                                                          
 ###  Email : ymcmrs@gmail.com                                 ###
-###  Univ. : King Abdullah University of Science & Technology ###   
+###  Univ. : Central South University (CSU) & KAUST.          ###   
 #################################################################
 
 import random
